@@ -52,10 +52,12 @@ def evaluate(model, mode='valid'):
             y_true.extend(y.flatten().tolist())
 
         y_true, y_pred = np.array(y_true), np.array(y_pred)
+        fpr, tpr, thresholds = roc_curve(y_true, y_pred, pos_label=1)
 
+        AUC = cal_auc(fpr, tpr)
         r_acc = accuracy_score(y_true, y_pred > 0.5)
 
-    return r_acc
+    return r_acc, AUC
 
 def batch_evaluate(model,x,y):
     device = torch.device("cuda")
@@ -102,7 +104,7 @@ if __name__ == '__main__':
 
     # train
     model = Trainer(gpu_ids, mode, pretrained_path)
-    model.model
+    model.model.to(device)
     model.total_steps = 0
 
     epoch = 0
@@ -115,20 +117,14 @@ if __name__ == '__main__':
         for i, (X, y) in enumerate(train_loader):
             model.model.train()
             model.total_steps+=1
-            X = X
-            y = y
+            X = X.to(device)
+            y = y.to(device)
 
             model.set_input(X, y)
             loss = model.optimize_weight()
 
             train_step+=1
             print("第{}个batch训练完成".format(train_step))
-
-            model.model.eval()
-            r_acc= batch_evaluate(model, X, y)
-
-            print("r_acc为："+str(r_acc))
-            # print("f_acc为："+str(f_acc))
 
 
         total_train_step +=1
@@ -141,11 +137,18 @@ if __name__ == '__main__':
         if epoch % 1 == 0:
             model.model.eval()
 
-
-            r_acc = evaluate(model)
-            print("本次epoch的acc为："+str(r_acc))
+            r_acc, auc = evaluate(model)
+            print("本次epoch的acc为：" + str(r_acc))
+            print("本次epoch的auc为：" + str(auc))
             model.model.train()
 
+        if epoch % 2 == 0:
+            model.model.eval()
+
+            r_acc, auc = evaluate(model, mode='test')
+            print("本次epoch的acc为（test）：" + str(r_acc))
+            print("本次epoch的auc为（test）：" + str(auc))
+            model.model.train()
 
 
 

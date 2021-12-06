@@ -17,7 +17,7 @@ class Trainer():
         self.device = torch.device('cuda:{}'.format(gpu_ids[0])) if gpu_ids else torch.device('cpu')
         self.model = F3Net(mode=mode, device=self.device)
         self.model = initModel(self.model, gpu_ids)
-        self.loss_fn = nn.BCEWithLogitsLoss()
+        self.loss_fn = nn.BCEWithLogitsLoss().to(f'cuda:{gpu_ids[0]}')
         # self.optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()),
         #                                       lr=0.0002, betas=(0.9, 0.999))
         self.optimizer = torch.optim.RMSprop(filter(lambda p: p.requires_grad, self.model.parameters()),lr=0.0002,alpha=0.99)
