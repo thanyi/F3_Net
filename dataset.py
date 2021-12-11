@@ -34,14 +34,14 @@ class DeepfakeDataset(Dataset):
 
         # 对数据集进行划分
         if mode == "train":  # 60%
-            self.train_images = self.images[int(0.3 * len(self.images)):int(0.8 * len(self.images))]
-            self.train_labels = self.labels[int(0.3 * len(self.labels)):int(0.8 * len(self.labels))]
+            self.train_images = self.images[int(0.2 * len(self.images)):int(0.8 * len(self.images))]
+            self.train_labels = self.labels[int(0.2 * len(self.labels)):int(0.8 * len(self.labels))]
             self.images = self.train_images
             self.labels = self.train_labels
         elif mode == "val":  # 20% = 60%~80%
-            self.val_images = self.images[int(0.2 * len(self.images)):int(0.3 * len(self.images))]
+            self.val_images = self.images[int(0.1 * len(self.images)):int(0.2 * len(self.images))]
             self.val_images.extend(self.images[int(0.8 * len(self.images)):int(0.9 * len(self.images))])
-            self.val_labels = self.labels[int(0.2 * len(self.labels)):int(0.3 * len(self.labels))]
+            self.val_labels = self.labels[int(0.1 * len(self.labels)):int(0.2 * len(self.labels))]
             self.val_labels.extend(self.labels[int(0.8 * len(self.labels)):int(0.9 * len(self.labels))])
 
             self.images = self.val_images

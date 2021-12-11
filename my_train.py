@@ -1,6 +1,5 @@
 import os
 from datetime import time
-import logging
 
 import numpy as np
 import torch
@@ -23,6 +22,10 @@ loss_freq = 40
 mode = 'FAD' # ['Original', 'FAD', 'LFS', 'Both', 'Mix']
 pretrained_path = 'xception-b5690688.pth'
 
+normal_root = r"data/normal_our_imgs"
+malicious_root = r"data/malicious_our_imgs"
+csv_root = r"data/csv"
+
 
 def evaluate(model, mode='valid'):
     my_dataset = DeepfakeDataset(normal_root=normal_root, malicious_root=malicious_root, mode=mode, resize=299,
@@ -32,7 +35,6 @@ def evaluate(model, mode='valid'):
     with torch.no_grad():
         y_true, y_pred = [], []
 
-        # for i, d in enumerate(my_dataset.datasets):
         dataloader = torch.utils.data.DataLoader(
             dataset = my_dataset,
             batch_size = bz,
@@ -72,17 +74,11 @@ def batch_evaluate(model,x,y):
 
     r_acc = accuracy_score(y_true, y_pred > 0.5)
 
-
     return r_acc
 
 if __name__ == '__main__':
-
+    writer = SummaryWriter("./runs")
     device = torch.device('cuda')
-
-    normal_root = r"data/normal_our_imgs"
-    malicious_root = r"data/malicious_our_imgs"
-    csv_root = r"data/csv"
-
 
     train_data = DeepfakeDataset(normal_root=normal_root,malicious_root=malicious_root,mode='train',resize=299,csv_root=csv_root)
     val_data = DeepfakeDataset(normal_root=normal_root,malicious_root=malicious_root,mode='val',resize=299,csv_root=csv_root)
@@ -96,7 +92,6 @@ if __name__ == '__main__':
     train_loader = DataLoader(train_data, 16 ,shuffle = True)
     val_loader = DataLoader(val_data, 16 ,shuffle = True)
 
-
     # 记录训练的次数
     total_train_step = 0
     # 记录测试的次数
@@ -108,7 +103,6 @@ if __name__ == '__main__':
     model.total_steps = 0
 
     epoch = 0
-
     times = 0
     for epoch in range(10):
         print("第{}个epoch".format(epoch))
@@ -116,7 +110,7 @@ if __name__ == '__main__':
 
         for i, (X, y) in enumerate(train_loader):
             model.model.train()
-            model.total_steps+=1
+
             X = X.to(device)
             y = y.to(device)
 
@@ -127,8 +121,8 @@ if __name__ == '__main__':
             print("第{}个batch训练完成".format(train_step))
 
 
-        total_train_step +=1
-        print("epoch训练次数：{}, Loss: {}".format(total_train_step, model.loss.item()))
+        model.total_steps += 1
+        print("epoch训练次数：{}, Loss: {}".format(model.total_steps, model.loss.item()))
 
         if total_train_step % 1 == 0:
             times+=1
@@ -142,7 +136,7 @@ if __name__ == '__main__':
             print("本次epoch的auc为：" + str(auc))
             model.model.train()
 
-        if epoch % 2 == 0:
+        elif epoch % 5 == 0:
             model.model.eval()
 
             r_acc, auc = evaluate(model, mode='test')
