@@ -102,9 +102,8 @@ if __name__ == '__main__':
     model.model.to(device)
     model.total_steps = 0
 
-    epoch = 0
     times = 0
-    for epoch in range(10):
+    for epoch in range(1,10):
         print("第{}个epoch".format(epoch))
         train_step = 0
 
@@ -124,7 +123,7 @@ if __name__ == '__main__':
         model.total_steps += 1
         print("epoch训练次数：{}, Loss: {}".format(model.total_steps, model.loss.item()))
 
-        if total_train_step % 1 == 0:
+        if model.total_steps % 1 == 0:
             times+=1
             torch.save(model, "pretrain_model/model{}.pth".format(times))
 
