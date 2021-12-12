@@ -22,9 +22,9 @@ loss_freq = 40
 mode = 'FAD' # ['Original', 'FAD', 'LFS', 'Both', 'Mix']
 pretrained_path = 'xception-b5690688.pth'
 
-normal_root = r"data/normal_our_imgs"
-malicious_root = r"data/malicious_our_imgs"
-csv_root = r"data/csv"
+normal_root = r"/content/data/normal_dlib"
+malicious_root = r"/content/data/Deepfakes_dlib"
+csv_root = r"/content/data/csv"
 
 
 def evaluate(model, mode='valid'):
