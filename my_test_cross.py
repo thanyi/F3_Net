@@ -48,18 +48,17 @@ val_loader = DataLoader(val_data, 16, shuffle=True)
 
 def evaluate(model, mode='valid'):
     my_dataset = DeepfakeDataset(normal_root=normal_root, malicious_root=malicious_root, mode=mode, resize=299,
-                                 csv_root=csv_root)
+                               csv_root=csv_root)
     bz = 64
     # torch.cache.empty_cache()
     with torch.no_grad():
         y_true, y_pred = [], []
 
-        # for i, d in enumerate(my_dataset.datasets):
         dataloader = torch.utils.data.DataLoader(
-            dataset=my_dataset,
-            batch_size=bz,
-            shuffle=True,
-            num_workers=0
+            dataset = my_dataset,
+            batch_size = bz,
+            shuffle = True,
+            num_workers = 0
         )
 
         device = torch.device("cuda")
@@ -77,7 +76,11 @@ def evaluate(model, mode='valid'):
         fpr, tpr, thresholds = roc_curve(y_true, y_pred, pos_label=1)
 
         AUC = cal_auc(fpr, tpr)
-        r_acc = accuracy_score(y_true, y_pred > 0.5)
+
+        idx_real = np.where(y_true == 0)[0]
+        idx_fake = np.where(y_true == 1)[0]
+
+        r_acc = accuracy_score(y_true[idx_real], y_pred[idx_real] > 0.5)
 
     return r_acc, AUC
 

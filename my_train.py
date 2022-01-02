@@ -57,7 +57,11 @@ def evaluate(model, mode='valid'):
         fpr, tpr, thresholds = roc_curve(y_true, y_pred, pos_label=1)
 
         AUC = cal_auc(fpr, tpr)
-        r_acc = accuracy_score(y_true, y_pred > 0.5)
+
+        idx_real = np.where(y_true == 0)[0]
+        idx_fake = np.where(y_true == 1)[0]
+
+        r_acc = accuracy_score(y_true[idx_real], y_pred[idx_real] > 0.5)
 
     return r_acc, AUC
 
@@ -81,7 +85,7 @@ if __name__ == '__main__':
     device = torch.device('cuda')
 
     train_data = DeepfakeDataset(normal_root=normal_root,malicious_root=malicious_root,mode='train',resize=299,csv_root=csv_root)
-    val_data = DeepfakeDataset(normal_root=normal_root,malicious_root=malicious_root,mode='val',resize=299,csv_root=csv_root)
+    val_data = DeepfakeDataset(normal_root=normal_root,malicious_root=malicious_root,mode='valid',resize=299,csv_root=csv_root)
 
     train_data_size = len(train_data)
     val_data_size = len(val_data)
@@ -89,8 +93,8 @@ if __name__ == '__main__':
     print('train_data_size:',train_data_size)
     print('val_data_size:',val_data_size)
 
-    train_loader = DataLoader(train_data, 16 ,shuffle = True)
-    val_loader = DataLoader(val_data, 16 ,shuffle = True)
+    train_loader = DataLoader(train_data, 32 ,shuffle = True)
+    val_loader = DataLoader(val_data, 32 ,shuffle = True)
 
     # 记录训练的次数
     total_train_step = 0
@@ -125,7 +129,7 @@ if __name__ == '__main__':
 
         if model.total_steps % 1 == 0:
             times+=1
-            torch.save(model, "pretrain_model/model{}.pth".format(times))
+            torch.save(model.state_dict(), "/content/drive/MyDrive/models/F3/test_5(git_version)/model{}.pth".format(times))
 
         if epoch % 1 == 0:
             model.model.eval()

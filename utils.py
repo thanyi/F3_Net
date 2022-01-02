@@ -61,6 +61,7 @@ class FFDataset(data.Dataset):
         return len(self.train_list)
 
 
+
 def get_dataset(name = 'train', size=299, root='E:\\Dataset_pre\\ff++_dataset\\', frame_num=300, augment=True):
     root = os.path.join(root, name)
     fake_root = os.path.join(root,'fake')
