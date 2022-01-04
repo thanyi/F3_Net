@@ -123,7 +123,7 @@ class LFS_Head(nn.Module):
 
 
 class F3Net(nn.Module):
-    def __init__(self, num_classes=1, img_width=299, img_height=299, LFS_window_size=10, LFS_stride=2, LFS_M = 6, mode='FAD', device=None):
+    def __init__(self, num_classes=1, img_width=299, img_height=299, LFS_window_size=10, LFS_stride=2, LFS_M = 6, mode='Both', device=None):
         super(F3Net, self).__init__()
         assert img_width == img_height
         img_size = img_width

@@ -65,20 +65,6 @@ def evaluate(model, mode='valid'):
 
     return r_acc, AUC
 
-def batch_evaluate(model,x,y):
-    device = torch.device("cuda")
-    correct = 0
-    y_true, y_pred = [], []
-
-    output = model.forward(x)
-    y_pred.extend(output.sigmoid().flatten().tolist())
-    y_true.extend(y.flatten().tolist())
-
-    y_true, y_pred = np.array(y_true), np.array(y_pred)
-
-    r_acc = accuracy_score(y_true, y_pred > 0.5)
-
-    return r_acc
 
 if __name__ == '__main__':
     writer = SummaryWriter("./runs")
@@ -129,7 +115,7 @@ if __name__ == '__main__':
 
         if model.total_steps % 1 == 0:
             times+=1
-            torch.save(model.state_dict(), "/content/drive/MyDrive/models/F3/test_5(git_version)/model{}.pth".format(times))
+            torch.save(model.model.state_dict(), "/content/drive/MyDrive/models/F3/test_6(git_version)/model{}.pth".format(times))
 
         if epoch % 1 == 0:
             model.model.eval()

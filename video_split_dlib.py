@@ -3,13 +3,13 @@ import dlib
 import os
 
 if __name__ == '__main__':
-    videodir = r'E:\dataset\faceforensics++\manipulated_sequences\Face2Face\c23\videos'
-    path = r'E:\dataset\faceforensics++\manipulated_sequences\Face2Face\c23\Face2Fcae_dlib'
+    videodir = r'F:\dataset\faceforensics++\manipulated_sequences\Deepfakes\c23\videos'
+    path = r'F:\Face_Dataset\FF++\deepfake_our_imgs_dlib'
     dlib_classifier_path = r"shape_predictor_68_face_landmarks.dat"
     videonames = sorted(os.listdir(videodir))
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(dlib_classifier_path)
-    for videoname in videonames[60:300]:
+    for videoname in videonames[589:640]:
         videoname = os.path.join(videodir, videoname)
         img_dir = os.path.join(path, videoname.split('\\')[-1].split('.')[0])
         vc = cv2.VideoCapture(videoname)
