@@ -212,6 +212,7 @@ class F3Net(nn.Module):
             fea_LFS = self.LFS_head(x)
             fea_LFS = self.LFS_xcep.features(fea_LFS)
             fea_LFS = self._norm_fea(fea_LFS)
+
             y = torch.cat((fea_FAD, fea_LFS), dim=1)
 
         f = self.dp(y)
@@ -235,7 +236,7 @@ def generate_filter(start, end, size):
 def norm_sigma(x):
     return 2. * torch.sigmoid(x) - 1.
 
-def get_xcep_state_dict(pretrained_path=r'/content/F3_Net/xception-b5690688.pth'):
+def get_xcep_state_dict(pretrained_path=r'C:\Users\ethanyi\Desktop\deepfake_project\our_code\f3net\xception-b5690688.pth'):
     # load Xception
     state_dict = torch.load(pretrained_path)
     for name, weights in state_dict.items():
