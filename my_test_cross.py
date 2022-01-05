@@ -20,8 +20,7 @@ from sklearn.metrics import roc_curve
 from sklearn.metrics import auc as cal_auc
 
 
-osenvs = len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
-gpu_ids = [*range(osenvs)]
+
 max_epoch = 5
 loss_freq = 40
 mode = 'FAD'  # ['Original', 'FAD', 'LFS', 'Both', 'Mix']
@@ -29,7 +28,7 @@ pretrained_path = 'xception-b5690688.pth'
 device = torch.device("cuda")
 
 normal_root = r"/content/data/normal_dlib"
-malicious_root = r"/content/data/DeepFake++compress_dlib"
+malicious_root = r"/content/data/FaceSwap_dlib"
 csv_root = r"/content/data/csv"
 
 train_data = DeepfakeDataset(normal_root=normal_root, malicious_root=malicious_root, mode='train', resize=299,
@@ -85,12 +84,16 @@ def evaluate(model, mode='valid'):
     return r_acc, AUC
 
 if __name__ == '__main__':
-    model = torch.load("/content/drive/MyDrive/models/F3/test_2/model_2.pth")
+    datasetname = malicious_root.split('/')[-1]
+
+    model = Trainer([0], mode, pretrained_path)
+    model.model.load_state_dict(torch.load("/content/drive/MyDrive/models/F3/test_6(git_version)/model2.pth"))
+
     model.model.to(device)
 
     model.model.eval()
 
     r_acc, auc = evaluate(model)
-    print("模型在DeepFake++compress_dlib数据集上的acc为：" + str(r_acc))
-    print("模型在DeepFake++compress_dlib数据集上的auc为：" + str(auc))
+    print("模型在{}数据集上的acc为：".format(datasetname) + str(r_acc))
+    print("模型在{}数据集上的auc为：".format(datasetname) + str(auc))
     # model.model.train()
