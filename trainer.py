@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import parameter
-from models import F3Net
+from models.models import F3Net
 import torch.nn.functional as F
 import numpy as np
 import os

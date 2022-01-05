@@ -1,6 +1,10 @@
 import cv2
 import dlib
 import os
+'''
+这个模块使用dlib进行人脸识别和切脸
+使用了一个dlib模块的模型，位置在本文件夹中的 shape_predictor_68_face_landmarks.dat 文件
+'''
 
 if __name__ == '__main__':
     videodir = r'F:\dataset\faceforensics++\manipulated_sequences\Deepfakes\c23\videos'

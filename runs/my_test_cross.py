@@ -2,20 +2,12 @@
 这个文件主要是针对在colab上调试运行的时候使用的，所以可能是导致不能进行在本地运行
 '''
 
-
-import os
-import torch
-from torch import nn
 from torch.utils.data import DataLoader
-from models import *
 from trainer import *
-from xception import *
+from models.xception import *
 import numpy as np
-from torchvision import transforms
-from PIL import Image
-import os
-from dataset import DeepfakeDataset
-from sklearn.metrics import average_precision_score, precision_recall_curve, accuracy_score
+from dataset.dataset import DeepfakeDataset
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import roc_curve
 from sklearn.metrics import auc as cal_auc
 
@@ -24,7 +16,7 @@ from sklearn.metrics import auc as cal_auc
 max_epoch = 5
 loss_freq = 40
 mode = 'FAD'  # ['Original', 'FAD', 'LFS', 'Both', 'Mix']
-pretrained_path = 'xception-b5690688.pth'
+pretrained_path = '../models/xception-b5690688.pth'
 device = torch.device("cuda")
 
 normal_root = r"/content/data/normal_dlib"

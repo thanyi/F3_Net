@@ -8,7 +8,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import auc as cal_auc
-from dataset import DeepfakeDataset
+from dataset.dataset import DeepfakeDataset
 from trainer import Trainer
 from sklearn.metrics import average_precision_score, precision_recall_curve, accuracy_score
 #gpu设定
@@ -20,7 +20,7 @@ gpu_ids = [*range(osenvs)]
 max_epoch = 5
 loss_freq = 40
 mode = 'FAD' # ['Original', 'FAD', 'LFS', 'Both', 'Mix']
-pretrained_path = 'xception-b5690688.pth'
+pretrained_path = '../models/xception-b5690688.pth'
 
 normal_root = r"/content/data/normal_dlib"
 malicious_root = r"/content/data/Deepfakes_dlib"
@@ -67,7 +67,7 @@ def evaluate(model, mode='valid'):
 
 
 if __name__ == '__main__':
-    writer = SummaryWriter("./runs")
+    writer = SummaryWriter("")
     device = torch.device('cuda')
 
     train_data = DeepfakeDataset(normal_root=normal_root,malicious_root=malicious_root,mode='train',resize=299,csv_root=csv_root)

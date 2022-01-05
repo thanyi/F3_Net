@@ -1,18 +1,14 @@
 import os
-import sys
-import time
-import torch
 import torch.nn
 
-from utils import evaluate, get_dataset, FFDataset, setup_logger
+from utils.utils import evaluate, get_dataset, FFDataset, setup_logger
 from trainer import Trainer
-import numpy as np
 import random
 
 # config
 #dataset_path = '/data/yike/FF++_std_c40_300frames/'
 dataset_path = 'E:\\Dataset_pre\\ff++_dataset\\'
-pretrained_path = 'xception-b5690688.pth'
+pretrained_path = 'models/xception-b5690688.pth'
 batch_size = 12
 #gpu设定
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'   #在确保所有gpu可用的前提下，可设置多个gpu，否则torch.cuda.is_availabel()显示为false
