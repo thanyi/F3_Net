@@ -31,23 +31,12 @@ normal_root = r"/content/data/normal_dlib"
 malicious_root = r"/content/data/FaceSwap_dlib"
 csv_root = r"/content/data/csv"
 
-train_data = DeepfakeDataset(normal_root=normal_root, malicious_root=malicious_root, mode='train', resize=299,
-                             csv_root=csv_root)
-val_data = DeepfakeDataset(normal_root=normal_root, malicious_root=malicious_root, mode='val', resize=299,
-                           csv_root=csv_root)
-
-train_data_size = len(train_data)
-val_data_size = len(val_data)
-
-print('train_data_size:', train_data_size)
-print('val_data_size:', val_data_size)
-
-train_loader = DataLoader(train_data, 16, shuffle=True)
-val_loader = DataLoader(val_data, 16, shuffle=True)
 
 def evaluate(model, mode='valid'):
     my_dataset = DeepfakeDataset(normal_root=normal_root, malicious_root=malicious_root, mode=mode, resize=299,
                                csv_root=csv_root)
+
+    print("this is the {} dataset!".format(mode))
     bz = 64
     # torch.cache.empty_cache()
     with torch.no_grad():
