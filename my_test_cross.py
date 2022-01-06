@@ -15,7 +15,7 @@ from utils.utils import evaluate
 
 max_epoch = 5
 loss_freq = 40
-mode = 'FAD'  # ['Original', 'FAD', 'LFS', 'Both', 'Mix']
+mode = 'Both'  # ['Original', 'FAD', 'LFS', 'Both', 'Mix']
 pretrained_path = 'models/xception-b5690688.pth'
 device = torch.device("cuda")
 
