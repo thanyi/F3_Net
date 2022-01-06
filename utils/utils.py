@@ -114,10 +114,16 @@ def evaluate(model, normal_root,malicious_root,csv_root, mode='valid',):
 
         AUC = cal_auc(fpr, tpr)
 
-        idx_real = np.where(y_true == 0)[0]
-        idx_fake = np.where(y_true == 1)[0]
+        # idx_real = np.where(y_true == 0)[0]
+        # idx_fake = np.where(y_true == 1)[0]
 
-        r_acc = accuracy_score(y_true[idx_real], y_pred[idx_real] > 0.5)
+        for i in range(len(y_pred)):
+            if y_pred[i] < 0.5:
+                y_pred[i] = 0
+            else:
+                y_pred[i] = 1
+
+        r_acc = accuracy_score(y_true, y_pred)
 
     return r_acc, AUC
 
