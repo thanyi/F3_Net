@@ -20,7 +20,7 @@ gpu_ids = [*range(osenvs)]
 max_epoch = 5
 loss_freq = 40
 mode = 'Both' # ['Original', 'FAD', 'LFS', 'Both', 'Mix']
-pretrained_path = '../models/xception-b5690688.pth'
+pretrained_path = 'models/xception-b5690688.pth'
 
 normal_root = r"/content/data/normal_dlib"
 malicious_root = r"/content/data/Deepfakes_dlib"
