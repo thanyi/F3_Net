@@ -11,6 +11,9 @@ from PIL import Image
 import sys
 import logging
 
+from dataset.dataset import DeepfakeDataset
+from trainer import Trainer
+
 
 class FFDataset(data.Dataset):
 
@@ -77,49 +80,63 @@ def get_dataset(name = 'train', size=299, root='E:\\Dataset_pre\\ff++_dataset\\'
         dset_lst.append(dset)
     return torch.utils.data.ConcatDataset(dset_lst), total_len
 
-def evaluate(model, data_path, mode='valid'):
-    root= data_path
-    origin_root = root
-    root = os.path.join(data_path, mode)
-    real_root = os.path.join(root,'real')
-    dataset_real = FFDataset(dataset_root=real_root, size=299, frame_num=50, augment=False)
-    dataset_fake, _ = get_dataset(name=mode, root=origin_root, size=299, frame_num=50, augment=False)
-    dataset_img = torch.utils.data.ConcatDataset([dataset_real, dataset_fake])
+def evaluate(model, normal_root,malicious_root,csv_root, mode='valid',):
 
+    my_dataset = DeepfakeDataset(normal_root=normal_root, malicious_root=malicious_root, mode=mode, resize=299,
+                                 csv_root=csv_root)
+
+    print("this is the {} dataset!".format(mode))
     bz = 64
     # torch.cache.empty_cache()
     with torch.no_grad():
         y_true, y_pred = [], []
 
-        for i, d in enumerate(dataset_img.datasets):
-            dataloader = torch.utils.data.DataLoader(
-                dataset = d,
-                batch_size = bz,
-                shuffle = True,
-                num_workers = 0
-            )
-            for img in dataloader:
-                if i == 0:
-                    label = torch.zeros(img.size(0))
-                else:
-                    label = torch.ones(img.size(0))
-                img = img.detach().cuda()
-                output = model.forward(img)
-                y_pred.extend(output.sigmoid().flatten().tolist())
-                y_true.extend(label.flatten().tolist())
+        dataloader = torch.utils.data.DataLoader(
+            dataset=my_dataset,
+            batch_size=bz,
+            shuffle=True,
+            num_workers=0
+        )
 
-    y_true, y_pred = np.array(y_true), np.array(y_pred)
-    fpr, tpr, thresholds = roc_curve(y_true,y_pred,pos_label=1)
-    AUC = cal_auc(fpr, tpr)
+        device = torch.device("cuda")
+        correct = 0
+        total = len(my_dataset)
 
-    idx_real = np.where(y_true==0)[0]
-    idx_fake = np.where(y_true==1)[0]
+        for x, y in dataloader:
+            x, y = x.to(device), y.to(device)
 
-    r_acc = accuracy_score(y_true[idx_real], y_pred[idx_real] > 0.5)
-    f_acc = accuracy_score(y_true[idx_fake], y_pred[idx_fake] > 0.5)
+            output = model.forward(x)
+            y_pred.extend(output.sigmoid().flatten().tolist())
+            y_true.extend(y.flatten().tolist())
 
-    return AUC, r_acc, f_acc
+        y_true, y_pred = np.array(y_true), np.array(y_pred)
+        fpr, tpr, thresholds = roc_curve(y_true, y_pred, pos_label=1)
 
+        AUC = cal_auc(fpr, tpr)
+
+        idx_real = np.where(y_true == 0)[0]
+        idx_fake = np.where(y_true == 1)[0]
+
+        r_acc = accuracy_score(y_true[idx_real], y_pred[idx_real] > 0.5)
+
+    return r_acc, AUC
+
+def check_video_acc():
+    normal_root = r"/content/data/normal_dlib"
+    malicious_root = r"/content/data/FaceSwap_dlib"
+    csv_root = r"/content/data/csv"
+
+    device = torch.device("cuda")
+
+    model = Trainer([0], 'test', pretrained_path = '../models/xception-b5690688.pth')
+    model.model.load_state_dict(torch.load("/content/drive/MyDrive/models/F3/test_6(git_version)/model2.pth"))
+
+    model.model.to(device)
+
+    model.model.eval()
+
+    for dir in os.listdir(r'C:\Users\ethanyi\Desktop\deepfake_project\数据集\FaceSwap_dlib'):
+        os.path.join()
 
 # python 3.7
 """Utility functions for logging."""

@@ -10,7 +10,7 @@ from dataset.dataset import DeepfakeDataset
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import roc_curve
 from sklearn.metrics import auc as cal_auc
-
+from utils.utils import evaluate
 
 
 max_epoch = 5
@@ -24,7 +24,7 @@ malicious_root = r"/content/data/FaceSwap_dlib"
 csv_root = r"/content/data/csv"
 
 
-def evaluate(model, mode='valid'):
+def my_evaluate(model, mode='valid'):
     my_dataset = DeepfakeDataset(normal_root=normal_root, malicious_root=malicious_root, mode=mode, resize=299,
                                csv_root=csv_root)
 
@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     model.model.eval()
 
-    r_acc, auc = evaluate(model)
+    r_acc, auc = evaluate(model,normal_root,malicious_root,csv_root,"test")
     print("模型在{}数据集上的acc为：".format(datasetname) + str(r_acc))
     print("模型在{}数据集上的auc为：".format(datasetname) + str(auc))
     # model.model.train()

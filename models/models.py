@@ -1,4 +1,5 @@
-from xception import Xception
+from models.xception import Xception
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -236,7 +237,7 @@ def generate_filter(start, end, size):
 def norm_sigma(x):
     return 2. * torch.sigmoid(x) - 1.
 
-def get_xcep_state_dict(pretrained_path=r'C:\Users\ethanyi\Desktop\deepfake_project\our_code\f3net\xception-b5690688.pth'):
+def get_xcep_state_dict(pretrained_path=r'C:\Users\ethanyi\Desktop\deepfake_project\our_code\f3net\models\xception-b5690688.pth'):
     # load Xception
     state_dict = torch.load(pretrained_path)
     for name, weights in state_dict.items():
