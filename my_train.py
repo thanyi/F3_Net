@@ -11,6 +11,8 @@ from sklearn.metrics import auc as cal_auc
 from dataset.dataset import DeepfakeDataset
 from trainer import Trainer
 from sklearn.metrics import average_precision_score, precision_recall_curve, accuracy_score
+from utils.utils import evaluate
+
 #gpu设定
 
 
@@ -27,43 +29,6 @@ malicious_root = r"/content/data/Deepfakes_dlib"
 csv_root = r"/content/data/csv"
 
 
-def evaluate(model, mode='valid'):
-    my_dataset = DeepfakeDataset(normal_root=normal_root, malicious_root=malicious_root, mode=mode, resize=299,
-                               csv_root=csv_root)
-    bz = 64
-    # torch.cache.empty_cache()
-    with torch.no_grad():
-        y_true, y_pred = [], []
-
-        dataloader = torch.utils.data.DataLoader(
-            dataset = my_dataset,
-            batch_size = bz,
-            shuffle = True,
-            num_workers = 0
-        )
-
-        device = torch.device("cuda")
-        correct = 0
-        total = len(my_dataset)
-
-        for x, y in dataloader:
-            x, y = x.to(device), y.to(device)
-
-            output = model.forward(x)
-            y_pred.extend(output.sigmoid().flatten().tolist())
-            y_true.extend(y.flatten().tolist())
-
-        y_true, y_pred = np.array(y_true), np.array(y_pred)
-        fpr, tpr, thresholds = roc_curve(y_true, y_pred, pos_label=1)
-
-        AUC = cal_auc(fpr, tpr)
-
-        idx_real = np.where(y_true == 0)[0]
-        idx_fake = np.where(y_true == 1)[0]
-
-        r_acc = accuracy_score(y_true[idx_real], y_pred[idx_real] > 0.5)
-
-    return r_acc, AUC
 
 
 if __name__ == '__main__':
@@ -120,7 +85,7 @@ if __name__ == '__main__':
         if epoch % 1 == 0:
             model.model.eval()
 
-            r_acc, auc = evaluate(model)
+            r_acc, auc = evaluate(model,normal_root,malicious_root,csv_root,"valid")
             print("本次epoch的acc为：" + str(r_acc))
             print("本次epoch的auc为：" + str(auc))
             model.model.train()
@@ -128,7 +93,7 @@ if __name__ == '__main__':
         elif epoch % 5 == 0:
             model.model.eval()
 
-            r_acc, auc = evaluate(model, mode='test')
+            r_acc, auc = evaluate(model,normal_root,malicious_root,csv_root,"test")
             print("本次epoch的acc为（test）：" + str(r_acc))
             print("本次epoch的auc为（test）：" + str(auc))
             model.model.train()

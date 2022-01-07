@@ -86,6 +86,8 @@ def evaluate(model, normal_root,malicious_root,csv_root, mode='valid',):
                                  csv_root=csv_root)
 
     print("this is the {} dataset!".format(mode))
+    print("dataset size:{}".format(len(my_dataset)))
+
     bz = 64
     # torch.cache.empty_cache()
     with torch.no_grad():
