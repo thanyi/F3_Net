@@ -73,12 +73,12 @@ class DeepfakeDataset(Dataset):
             for root,dirs,files in os.walk(os.path.join(self.normal_root)):
                 for dir in dirs:
                     # 获取指定目录下所有的满足后缀的图像名
-                    normal_images += glob.glob(os.path.join(os.path.join(root, dir), "*.png"))
+                    normal_images += glob.glob(os.path.join(os.path.join(root, dir), "*-0.png"))
             # 虚假图片的路径载入
             for root,dirs,files in os.walk(os.path.join(self.malicious_root)):
                 for dir in dirs:
                     # 获取指定目录下所有的满足后缀的图像名
-                    malicious_images += glob.glob(os.path.join(os.path.join(root, dir), "*.png"))
+                    malicious_images += glob.glob(os.path.join(os.path.join(root, dir), "*-0.png"))
 
             with open(os.path.join(self.csv_root, filename), mode="w", newline="") as f:
                 writer = csv.writer(f)
