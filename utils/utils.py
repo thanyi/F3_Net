@@ -10,6 +10,8 @@ from sklearn.metrics import auc as cal_auc
 from PIL import Image
 import sys
 import logging
+from kaggle_dfdc_model.wsdan import WSDAN
+
 
 from dataset.dataset import DeepfakeDataset
 from trainer import Trainer
@@ -116,8 +118,58 @@ def evaluate(model, normal_root,malicious_root,csv_root, mode='valid',):
 
         AUC = cal_auc(fpr, tpr)
 
-        # idx_real = np.where(y_true == 0)[0]
-        # idx_fake = np.where(y_true == 1)[0]
+        for i in range(len(y_pred)):
+            if y_pred[i] < 0.5:
+                y_pred[i] = 0
+            else:
+                y_pred[i] = 1
+
+        r_acc = accuracy_score(y_true, y_pred)
+
+    return r_acc, AUC
+
+def kaggle_evaluate(normal_root,malicious_root,csv_root, mode='valid',):
+    device = torch.device("cuda")
+    model = WSDAN(num_classes=2, M=8, net='xception',
+                  pretrained=r"D:\DeepFakeProject_in_D\deepfake_project\our_code\f3net\kaggle_dfdc_model\xception-hg-2.pth")
+
+    model.to(device)
+    model.eval()
+
+    my_dataset = DeepfakeDataset(normal_root=normal_root, malicious_root=malicious_root, mode=mode, resize=299,
+                                 csv_root=csv_root)
+    malicious_name = malicious_root.split('/')[-1]
+    print("This is the {} {} dataset!".format(malicious_name,mode))
+    print("dataset size:{}".format(len(my_dataset)))
+
+    bz = 64
+    # torch.cache.empty_cache()
+    with torch.no_grad():
+        y_true, y_pred = [], []
+
+        dataloader = torch.utils.data.DataLoader(
+            dataset=my_dataset,
+            batch_size=bz,
+            shuffle=True,
+            num_workers=0
+        )
+
+        device = torch.device("cuda")
+        correct = 0
+        total = len(my_dataset)
+
+        for x, y in dataloader:
+            x, y = x.to(device), y.to(device)
+
+            output, f ,a = model(x)
+            output = output.argmax(1).item()
+            y_pred.append(output)
+            y_true.extend(y.flatten().tolist())
+
+        y_true, y_pred = np.array(y_true), np.array(y_pred)
+        fpr, tpr, thresholds = roc_curve(y_true, y_pred, pos_label=1)
+
+        AUC = cal_auc(fpr, tpr)
 
         for i in range(len(y_pred)):
             if y_pred[i] < 0.5:
