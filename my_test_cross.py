@@ -39,7 +39,10 @@ def f3netTest():
     # model.model.train()
 
 def kaggle_Dfdc_Test():
-    kaggle_evaluate(normal_root, malicious_root, csv_root, "test")
+    datasetname = malicious_root.split('/')[-1]
+    r_acc, auc  = kaggle_evaluate(normal_root, malicious_root, csv_root, "test")
+    print("模型在{}数据集上的acc为：".format(datasetname) + str(r_acc))
+    print("模型在{}数据集上的auc为：".format(datasetname) + str(auc))
 
 if __name__ == '__main__':
     kaggle_Dfdc_Test()
