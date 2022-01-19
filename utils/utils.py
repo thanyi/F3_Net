@@ -11,7 +11,7 @@ from PIL import Image
 import sys
 import logging
 from kaggle_dfdc_model.wsdan import WSDAN
-
+from torch import nn
 
 from dataset.dataset import DeepfakeDataset
 from trainer import Trainer
@@ -182,6 +182,19 @@ def kaggle_evaluate(normal_root,malicious_root,csv_root, mode='valid',):
         r_acc = accuracy_score(y_true, y_pred)
 
     return r_acc, AUC
+
+
+##############################################
+# Center Loss for Attention Regularization
+##############################################
+class CenterLoss(nn.Module):
+    def __init__(self):
+        super(CenterLoss, self).__init__()
+        self.l2_loss = nn.MSELoss(reduction='sum')
+
+    def forward(self, outputs, targets):
+        return self.l2_loss(outputs, targets) / outputs.size(0)
+
 
 def check_video_acc():
     normal_root = r"/content/data/normal_dlib"

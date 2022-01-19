@@ -7,13 +7,13 @@ import os
 '''
 
 if __name__ == '__main__':
-    videodir = r'F:\dataset\faceforensics++\manipulated_sequences\FaceSwap\c23\videos'
-    path = r'F:\Face_Dataset\FF++\FaceSwap_dlib'
+    videodir = r'F:\dataset\DFDC\video_dfdc\dfdc_train_part_00\dfdc_train_part_0'
+    path = r'F:\dataset\DFDC\img_dfdc\dfdc_train_part_00'
     dlib_classifier_path = r"shape_predictor_68_face_landmarks.dat"
     videonames = sorted(os.listdir(videodir))
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(dlib_classifier_path)
-    for videoname in videonames[500:600]:
+    for videoname in videonames[201:250]:
         videoname = os.path.join(videodir, videoname)
         img_dir = os.path.join(path, videoname.split('\\')[-1].split('.')[0])
         vc = cv2.VideoCapture(videoname)
