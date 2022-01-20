@@ -19,30 +19,31 @@ mode = 'Both'  # ['Original', 'FAD', 'LFS', 'Both', 'Mix']
 pretrained_path = 'models/xception-b5690688.pth'
 device = torch.device("cuda")
 
-normal_root = r"D:\DeepFakeProject_in_D\deepfake_project\数据集\normal_our_imgs"
-malicious_root = r"D:\DeepFakeProject_in_D\deepfake_project\数据集\malicious_our_imgs_deepfakes"
-csv_root = r"D:\DeepFakeProject_in_D\deepfake_project\数据集\csv"
+normal_root = r"/content/data/normal_dlib"
+malicious_root = r"/content/data/Deepfakes_dlib"
+csv_root = r"/content/data/csv"
+path_name = "/content/drive/MyDrive/models/F3/test_8/model2.pth"
 
 def f3netTest():
     datasetname = malicious_root.split('/')[-1]
 
     model = Trainer([0], mode, pretrained_path)
-    model.model.load_state_dict(torch.load("/content/drive/MyDrive/models/F3/test_6(git_version)/model2.pth"))
+    model.model.load_state_dict(torch.load(path_name))
 
     model.model.to(device)
 
     model.model.eval()
 
     r_acc, auc = evaluate(model, normal_root, malicious_root, csv_root, "test")
-    print("f3netTest模型在{}数据集上的acc为：".format(datasetname) + str(r_acc))
-    print("f3netTest模型在{}数据集上的auc为：".format(datasetname) + str(auc))
-    # model.model.train()
+    print(path_name+"模型在{}数据集上的acc为：".format(datasetname) + str(r_acc))
+    print(path_name+"模型在{}数据集上的auc为：".format(datasetname) + str(auc))
+
 
 def kaggle_Dfdc_Test():
     datasetname = malicious_root.split('/')[-1]
     r_acc, auc  = kaggle_evaluate(normal_root, malicious_root, csv_root, "test")
-    print("kaggle_Dfdc_Test模型在{}数据集上的acc为：".format(datasetname) + str(r_acc))
-    print("kaggle_Dfdc_Test模型在{}数据集上的auc为：".format(datasetname) + str(auc))
+    print(path_name+"模型在{}数据集上的acc为：".format(datasetname) + str(r_acc))
+    print(path_name+"模型在{}数据集上的auc为：".format(datasetname) + str(auc))
 
 if __name__ == '__main__':
-    kaggle_Dfdc_Test()
+    f3netTest()
