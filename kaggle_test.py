@@ -25,7 +25,7 @@ model.load_state_dict(torch.load(config.wsdan_pretained_path))
 model.to(config.device)
 model.eval()
 
-test_data = DeepfakeDataset(normal_root=config.normal_root, malicious_root= config.malicious_root, mode='test', resize=299,
+test_data = DeepfakeDataset(normal_root=config.normal_root, malicious_root= config.malicious_root, mode='test', resize=config.resize,
                              csv_root=config.csv_root)
 test_loader = DataLoader(test_data, 32, shuffle=True,num_workers=0)
 

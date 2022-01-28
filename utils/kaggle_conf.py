@@ -21,3 +21,4 @@ wsdan_pretained_path = r"D:\DeepFakeProject_in_D\deepfake_project\our_code\f3net
 
 # 其他设置
 device = torch.device("cuda")
+resize = 299
