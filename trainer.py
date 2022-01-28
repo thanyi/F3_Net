@@ -5,7 +5,7 @@ from models.models import F3Net
 import torch.nn.functional as F
 import numpy as np
 import os
-
+import utils.f3net_conf as config
 
 def initModel(mod, gpu_ids):
     # mod = mod.to(f'cuda:{gpu_ids[0]}')
@@ -52,3 +52,6 @@ class Trainer():
     def load(self, path):
         state_dict = torch.load(path)
         self.model.load_state_dict(state_dict)
+
+if __name__ == '__main__':
+    model = Trainer(config.gpu_ids, config.mode, config.pretrained_path)

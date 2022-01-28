@@ -1,6 +1,3 @@
-import os
-from datetime import time
-
 
 import torch
 from sklearn.metrics import roc_curve
@@ -12,33 +9,21 @@ from dataset.dataset import DeepfakeDataset
 from trainer import Trainer
 from sklearn.metrics import average_precision_score, precision_recall_curve, accuracy_score
 from utils.utils import evaluate,CenterLoss
-from kaggle_dfdc_model.wsdan import WSDAN
+import utils.f3net_conf as config
 
-#gpu设定
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'   #在确保所有gpu可用的前提下，可设置多个gpu，否则torch.cuda.is_availabel()显示为false
-osenvs = len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
-gpu_ids = [*range(osenvs)]
-max_epoch = 5
-loss_freq = 40
-mode = 'Both' # ['Original', 'FAD', 'LFS', 'Both', 'Mix']
-pretrained_path = 'models/xception-b5690688.pth'
-
-normal_root = r"/content/data/normal_dlib"
-malicious_root = r"/content/data/Deepfakes_dlib"
-csv_root = r"/content/data/csv"
 
 def f3net_training():
     device = torch.device('cuda')
 
-    train_data = DeepfakeDataset(normal_root=normal_root, malicious_root=malicious_root, mode='train', resize=299,
-                                 csv_root=csv_root)
+    train_data = DeepfakeDataset(normal_root=config.normal_root, malicious_root=config.malicious_root, mode='train', resize=299,
+                                 csv_root=config.csv_root)
     train_data_size = len(train_data)
     print('train_data_size:', train_data_size)
 
     train_loader = DataLoader(train_data, 16, shuffle=True)
 
     # train
-    model = Trainer(gpu_ids, mode, pretrained_path)
+    model = Trainer(config.gpu_ids, config.mode, config.pretrained_path)
     model.model.to(device)
     model.total_steps = 0
 
@@ -71,7 +56,7 @@ def f3net_training():
         if epoch % 1 == 0:
             model.model.eval()
 
-            r_acc, auc = evaluate(model, normal_root, malicious_root, csv_root, "valid")
+            r_acc, auc = evaluate(model, config.normal_root, config.malicious_root, config.csv_root, "valid")
             print("本次epoch的acc为：" + str(r_acc))
             print("本次epoch的auc为：" + str(auc))
             model.model.train()

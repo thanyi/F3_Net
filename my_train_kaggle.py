@@ -115,26 +115,21 @@ def kaggle_training():
                 epoch_crop_acc = crop_metric(y_pred_crop, y)
                 epoch_drop_acc = drop_metric(y_pred_drop, y)
 
-        # end of this batch
-        epoch_loss = torch.tensor(epoch_loss).cuda()
-        epoch_raw_acc = torch.tensor(epoch_raw_acc).cuda()
-        epoch_crop_acc = torch.tensor(epoch_crop_acc).cuda()
-        epoch_drop_acc = torch.tensor(epoch_drop_acc).cuda()
+            # end of this batch
+            epoch_loss = torch.tensor(epoch_loss).cuda()
+            epoch_raw_acc = torch.tensor(epoch_raw_acc).cuda()
+            epoch_crop_acc = torch.tensor(epoch_crop_acc).cuda()
+            epoch_drop_acc = torch.tensor(epoch_drop_acc).cuda()
 
-        # end of this epoch
-        logs['train_{}'.format(loss_container.name)] = epoch_loss
-        logs['train_raw_{}'.format(raw_metric.name)] = epoch_raw_acc
-        logs['train_crop_{}'.format(crop_metric.name)] = epoch_crop_acc
-        logs['train_drop_{}'.format(drop_metric.name)] = epoch_drop_acc
-        logs['train_info'] = batch_info
-        end_time = time.time()
+            batch_info = 'Loss {:.4f}, Raw Acc ({:.2f}), Crop Acc ({:.2f}), Drop Acc ({:.2f})'.format(
+                epoch_loss, epoch_raw_acc[0],
+                epoch_crop_acc[0], epoch_drop_acc[0])
 
-        logging.info('Train: {}, Time {:3.2f}'.format(batch_info, end_time - start_time))
+
+            print('Train: {}'.format(batch_info))
 
         model.total_steps += 1
-        batch_info = 'Loss {:.4f}, Raw Acc ({:.2f}), Crop Acc ({:.2f}), Drop Acc ({:.2f})'.format(
-            epoch_loss, epoch_raw_acc[0],
-            epoch_crop_acc[0], epoch_drop_acc[0])
+
 
         if model.total_steps % 1 == 0:
             times += 1
@@ -148,3 +143,7 @@ def kaggle_training():
             print("本次epoch的acc为：" + str(r_acc))
             print("本次epoch的auc为：" + str(auc))
             model.model.train()
+
+
+if __name__ == '__main__':
+    kaggle_training()
