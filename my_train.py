@@ -42,8 +42,9 @@ def f3net_training():
             loss = model.optimize_weight()
 
             train_step += 1
-            print("第{}个batch训练完成".format(train_step))
-            print("Loss: {}".format(model.loss.item()))
+            if train_step %10 ==0:
+                print("第{}个batch训练完成".format(train_step))
+                print("Loss: {}".format(model.loss.item()))
 
         model.total_steps += 1
         print("epoch训练次数：{}, Loss: {}".format(model.total_steps, model.loss.item()))

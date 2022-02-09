@@ -7,13 +7,13 @@ import os
 '''
 
 if __name__ == '__main__':
-    videodir = r'F:\dataset\DFDC\video_dfdc\dfdc_train_part_00\dfdc_train_part_0'
-    path = r'F:\Face_Dataset\DFDC\img_dfdc\dfdc_train_part_00'
+    videodir = r'F:\dataset\Celeb-DF-v2\Celeb-real'
+    path = r'F:\dataset\Celeb-DF-v2\test_normal_dlib'
     dlib_classifier_path = r"shape_predictor_68_face_landmarks.dat"
     videonames = sorted(os.listdir(videodir))
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(dlib_classifier_path)
-    for videoname in videonames[850:900]:
+    for videoname in videonames[150:200]:
         videoname = os.path.join(videodir, videoname)
         img_dir = os.path.join(path, videoname.split('\\')[-1].split('.')[0])
         vc = cv2.VideoCapture(videoname)
@@ -97,7 +97,7 @@ if __name__ == '__main__':
                         if same_count < 10:
                             save_img = img[int(t_y):int(t_y + t_h), int(t_x):int(t_x + t_w)]
                             try:
-                                save_img = cv2.resize(save_img, (299, 299))
+                                save_img = cv2.resize(save_img, (380, 380))
                                 cv2.imwrite(img_dir+'\\'+img_dir.split('\\')[-1] + '-'+ str(image_count) + '-' + str(faceID) + '.png',
                                     save_img)  # 保存路径
                             except Exception:

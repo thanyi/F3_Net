@@ -15,7 +15,7 @@ from torch import nn
 
 from dataset.dataset import DeepfakeDataset
 from trainer import Trainer
-
+import kaggle_conf as kaggle_config
 
 class FFDataset(data.Dataset):
 
@@ -131,8 +131,8 @@ def evaluate(model, normal_root,malicious_root,csv_root, mode='valid',):
 def kaggle_evaluate(normal_root,malicious_root,csv_root, mode='valid',):
     device = torch.device("cuda")
     model = WSDAN(num_classes=2, M=8, net='xception',
-                  pretrained=r"D:\DeepFakeProject_in_D\deepfake_project\our_code\f3net\kaggle_dfdc_model\xception-hg-2.pth")
-    model.load_state_dict(torch.load(r"D:\DeepFakeProject_in_D\deepfake_project\our_code\f3net\kaggle_dfdc_model\ckpt_x.pth"))
+                  pretrained=kaggle_config.xception_pretained_path)
+    model.load_state_dict(torch.load(kaggle_config.wsdan_pretained_path))
 
     model.to(device)
     model.eval()
@@ -163,8 +163,7 @@ def kaggle_evaluate(normal_root,malicious_root,csv_root, mode='valid',):
             x, y = x.to(device), y.to(device)
 
             output, f ,a = model(x)
-            # output = output.argmax(1).flatten().tolist()
-            # output = output.item()
+
             y_pred.extend(output.argmax(1).flatten().tolist())
             y_true.extend(y.flatten().tolist())
 
