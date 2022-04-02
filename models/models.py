@@ -9,6 +9,10 @@ import types
 
 # Filter Module
 class Filter(nn.Module):
+    '''
+    FAD模块的filter，添加进DCT变换之后的矩阵
+        因为filter中设置grad为True所以是可以进行反向传播的
+    '''
     def __init__(self, size, band_start, band_end, use_learnable=True, norm=False):
         super(Filter, self).__init__()
         self.use_learnable = use_learnable
@@ -40,6 +44,12 @@ class Filter(nn.Module):
 
 # FAD Module
 class FAD_Head(nn.Module):
+    '''
+    FAD模块
+        3个不同频率的filter和一个整体filter生成
+        将DCT变换后的base filter分别和这四个点乘
+        结果经cat后输出
+    '''
     def __init__(self, size):
         super(FAD_Head, self).__init__()
 
@@ -98,7 +108,7 @@ class LFS_Head(nn.Module):
         N, C, W, H = x.size()
         S = self.window_size
         size_after = int((W - S + 8)/2) + 1
-        assert size_after == 149
+        # assert size_after == 149
 
         # sliding window unfold and DCT
         x_unfold = self.unfold(x)   # [N, C * S * S, L]   L:block num
@@ -151,6 +161,15 @@ class F3Net(nn.Module):
         self.dp = nn.Dropout(p=0.2)
 
     def init_xcep_FAD(self):
+        '''
+        函数所做
+            加载Xception，作为FAD_xcep
+            调用get_xcep_state_dict()加载预训练模型
+            更改FAD_xcep的conv1，理由好像是为了平衡模型
+
+        Returns:
+
+        '''
         self.FAD_xcep = Xception(self.num_classes)
         
         # To get a good performance, using ImageNet-pretrained Xception model is recommended
@@ -162,10 +181,20 @@ class F3Net(nn.Module):
         # copy on conv1
         # let new conv1 use old param to balance the network
         self.FAD_xcep.conv1 = nn.Conv2d(12, 32, 3, 2, 0, bias=False)
+
         for i in range(4):
             self.FAD_xcep.conv1.weight.data[:, i*3:(i+1)*3, :, :] = conv1_data / 4.0
 
     def init_xcep_LFS(self):
+        '''
+        函数所做
+            加载Xception，作为LFS_xcep
+            调用get_xcep_state_dict()加载预训练模型
+            更改LFS_xcep的conv1，理由好像是为了平衡模型
+
+        Returns:
+
+        '''
         self.LFS_xcep = Xception(self.num_classes)
         
         # To get a good performance, using ImageNet-pretrained Xception model is recommended
@@ -181,6 +210,11 @@ class F3Net(nn.Module):
             self.LFS_xcep.conv1.weight.data[:, i*3:(i+1)*3, :, :] = conv1_data / float(self._LFS_M / 3.0)
 
     def init_xcep(self):
+        '''
+        默认加载Xception
+        Returns:
+
+        '''
         self.xcep = Xception(self.num_classes)
 
         # To get a good performance, using ImageNet-pretrained Xception model is recommended
@@ -218,9 +252,17 @@ class F3Net(nn.Module):
 
         f = self.dp(y)
         f = self.fc(f)
-        return y,f
+        return f
 
     def _norm_fea(self, fea):
+        '''
+
+        Args:
+            fea: 特征图
+
+        Returns: 经过了池化过后的特征
+
+        '''
         f = self.relu(fea)
         f = F.adaptive_avg_pool2d(f, (1,1))
         f = f.view(f.size(0), -1)
@@ -228,16 +270,34 @@ class F3Net(nn.Module):
 
 # utils
 def DCT_mat(size):
+    '''
+    DCT变换函数
+    '''
     m = [[ (np.sqrt(1./size) if i == 0 else np.sqrt(2./size)) * np.cos((j + 0.5) * np.pi * i / size) for j in range(size)] for i in range(size)]
     return m
 
 def generate_filter(start, end, size):
+
     return [[0. if i + j > end or i + j <= start else 1. for j in range(size)] for i in range(size)]
 
 def norm_sigma(x):
+    '''
+    进行归一化的 δ(x)
+    '''
     return 2. * torch.sigmoid(x) - 1.
 
-def get_xcep_state_dict(pretrained_path=config.f3_xception_pretrained_path):
+def get_xcep_state_dict(pretrained_path=config.xception_pretrained_path):
+    '''
+    这个函数进行
+        预训练模型加载
+        模型字典将带有”pointwise“的tensor扩维数
+        将预训练模型中带有“fc“的key的value删除
+    Args:
+        pretrained_path: 最开始的预训练模型
+
+    Returns:
+
+    '''
     # load Xception
     state_dict = torch.load(pretrained_path)
     for name, weights in state_dict.items():
@@ -360,3 +420,6 @@ class MixBlock(nn.Module):
         return y_FAD, y_LFS
 
 
+if __name__ == '__main__':
+    net = F3Net()
+    print(net)

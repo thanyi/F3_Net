@@ -10,12 +10,12 @@ from sklearn.metrics import auc as cal_auc
 from PIL import Image
 import sys
 import logging
-from kaggle_dfdc_model.wsdan import WSDAN
+
 from torch import nn
 
 from dataset.dataset import DeepfakeDataset
 from trainer import Trainer
-import kaggle_conf as kaggle_config
+
 
 class FFDataset(data.Dataset):
 
@@ -128,59 +128,6 @@ def evaluate(model, normal_root,malicious_root,csv_root, mode='valid',):
 
     return r_acc, AUC
 
-def kaggle_evaluate(normal_root,malicious_root,csv_root, mode='valid',):
-    device = torch.device("cuda")
-    model = WSDAN(num_classes=2, M=8, net='xception',
-                  pretrained=kaggle_config.xception_pretained_path)
-    model.load_state_dict(torch.load(kaggle_config.wsdan_pretained_path))
-
-    model.to(device)
-    model.eval()
-
-    my_dataset = DeepfakeDataset(normal_root=normal_root, malicious_root=malicious_root, mode=mode, resize=299,
-                                 csv_root=csv_root)
-    malicious_name = malicious_root.split('/')[-1]
-    print("This is the {} {} dataset!".format(malicious_name,mode))
-    print("dataset size:{}".format(len(my_dataset)))
-
-    bz = 64
-    # torch.cache.empty_cache()
-    with torch.no_grad():
-        y_true, y_pred = [], []
-
-        dataloader = torch.utils.data.DataLoader(
-            dataset=my_dataset,
-            batch_size=bz,
-            shuffle=True,
-            num_workers=0
-        )
-
-        device = torch.device("cuda")
-        correct = 0
-        total = len(my_dataset)
-
-        for x, y in dataloader:
-            x, y = x.to(device), y.to(device)
-
-            output, f ,a = model(x)
-
-            y_pred.extend(output.argmax(1).flatten().tolist())
-            y_true.extend(y.flatten().tolist())
-
-        y_true, y_pred = np.array(y_true), np.array(y_pred)
-        fpr, tpr, thresholds = roc_curve(y_true, y_pred, pos_label=1)
-
-        AUC = cal_auc(fpr, tpr)
-
-        for i in range(len(y_pred)):
-            if y_pred[i] < 0.5:
-                y_pred[i] = 0
-            else:
-                y_pred[i] = 1
-
-        r_acc = accuracy_score(y_true, y_pred)
-
-    return r_acc, AUC
 
 
 ##############################################
@@ -195,11 +142,8 @@ class CenterLoss(nn.Module):
         return self.l2_loss(outputs, targets) / outputs.size(0)
 
 
-def check_video_acc():
-    normal_root = r"/content/data/normal_dlib"
-    malicious_root = r"/content/data/FaceSwap_dlib"
-    csv_root = r"/content/data/csv"
-
+def check_video_acc(normal_root,malicious_root,csv_root):
+    #TODO
     device = torch.device("cuda")
 
     model = Trainer([0], 'test', pretrained_path = '../models/xception-b5690688.pth')

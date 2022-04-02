@@ -1,4 +1,6 @@
-
+'''
+这个文件是我们项目自己准备使用的模型训练脚本文件
+'''
 import torch
 from sklearn.metrics import roc_curve
 from torch import nn
@@ -6,11 +8,11 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import auc as cal_auc
 from dataset.dataset import DeepfakeDataset
-from trainer import Trainer
+from models.models import *
 from sklearn.metrics import average_precision_score, precision_recall_curve, accuracy_score
 from utils.utils import evaluate,CenterLoss
 import utils.f3net_conf as config
-
+from trainer import Trainer
 
 def f3net_training():
     device = torch.device('cuda')
@@ -23,6 +25,7 @@ def f3net_training():
     train_loader = DataLoader(train_data, 16, shuffle=True)
 
     # train
+
     model = Trainer(config.gpu_ids, config.mode, config.pretrained_path)
     model.model.to(device)
     model.total_steps = 0

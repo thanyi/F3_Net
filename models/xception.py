@@ -293,3 +293,6 @@ def get_xception(num_classes: object = 1000, pretrained: object = 'imagenet') ->
     model.last_linear = model.fc
     del model.fc
     return model
+if __name__ == '__main__':
+    xception = Xception()
+    print(xception)
