@@ -12,16 +12,16 @@ gpu_ids = [*range(osenvs)]
 max_epoch = 5
 loss_freq = 40
 mode = 'Both'  # ['Original', 'FAD', 'LFS', 'Both', 'Mix']
-pretrained_path = 'models/xception-b5690688.pth'
+# pretrained_path = 'models/xception-b5690688.pth'
 device = torch.device("cuda")
-resize = 299
+resize = 380
 
 ###########################
 #  路径
 ###########################
-normal_root = r"/content/data/normal_dlib"
-malicious_root = r"/content/data/Deepfakes_dlib"
-csv_root = r"/content/data/csv"
+normal_root = r"E:\Face_Dataset\celeb-Df\deepware(380_380)\celeb_real(380_380)"
+malicious_root = r"E:\Face_Dataset\celeb-Df\deepware(380_380)\celeb_syn(380_380)"
+csv_root = r"C:\Users\ethanyi\Desktop\security_competition\csv"
 
 model_path_name = r"G:\我的云端硬盘\models\F3\test_6(git_version)\model2.pth"
 xception_pretrained_path =r"D:\DeepFakeProject_in_D\deepfake_project\our_code\f3net\models\xception-b5690688.pth"

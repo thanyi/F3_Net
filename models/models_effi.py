@@ -164,7 +164,7 @@ class LFS_Head(nn.Module):
 
 class F3Net(nn.Module):
     def __init__(self, num_classes=1, img_width=380, img_height=380, LFS_window_size=10, LFS_stride=2, LFS_M=6,
-                 mode='Both', device=None):
+                 mode='FAD', device=None):
         super(F3Net, self).__init__()
         assert img_width == img_height
         img_size = img_width
@@ -189,7 +189,14 @@ class F3Net(nn.Module):
         # classifier
         self.relu = nn.ReLU(inplace=True)
         # effnet 的全连接
-        self.fc = nn.Linear(5120, 1)
+
+        if mode == 'LFS' or "FAD":
+            self.fc = nn.Linear(2560, 1)
+        else:
+            self.fc = nn.Linear(5120, 1)
+
+
+
         self.dp = nn.Dropout(p=0.2)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
 
