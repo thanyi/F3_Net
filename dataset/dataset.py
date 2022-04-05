@@ -69,13 +69,13 @@ class DeepfakeDataset(Dataset):
             normal_images = []
             malicious_images = []
 
-            #正常图片的路径载入
-            for root,dirs,files in os.walk(os.path.join(self.normal_root)):
+            # 正常图片的路径载入
+            for root, dirs, files in os.walk(os.path.join(self.normal_root)):
                 for dir in dirs:
                     # 获取指定目录下所有的满足后缀的图像名
                     normal_images += glob.glob(os.path.join(os.path.join(root, dir), "*.png"))
             # 虚假图片的路径载入
-            for root,dirs,files in os.walk(os.path.join(self.malicious_root)):
+            for root, dirs, files in os.walk(os.path.join(self.malicious_root)):
                 for dir in dirs:
                     # 获取指定目录下所有的满足后缀的图像名
                     malicious_images += glob.glob(os.path.join(os.path.join(root, dir), "*.png"))

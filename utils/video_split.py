@@ -11,12 +11,16 @@ CAMERA_STREAM = 1
 
 
 class dealImgThread(threading.Thread):
-    image_count = 0
+    '''
+    多线程
+        为了进行视频处理的时候的图片处理
+        处理一张图片，将其截取脸部并且保存
+    '''
     face_details = []
     details_lock = threading.Lock()
     count_lock = threading.Lock()
 
-    def __init__(self, frame, outPath, detector, predictor, timeF, frame_count):
+    def __init__(self, frame, outPath, detector, predictor, timeF, frame_count, image_count):
         threading.Thread.__init__(self)
         self.frame = frame
         self.outPath = outPath
@@ -24,10 +28,12 @@ class dealImgThread(threading.Thread):
         self.predictor = predictor
         self.timeF = timeF
         self.frame_count = frame_count
+        self.image_count = image_count
 
     def run(self):
         dots = self.detector(self.frame, 1)
         backup = dealImgThread.face_details[:]
+
         for k, d in enumerate(dots):
             shape = self.predictor(self.frame, d)
             # 排除静态人脸,如画像
@@ -40,6 +46,7 @@ class dealImgThread(threading.Thread):
                 if same_count >= 10:
                     isSame = True
                     break
+
             if self.frame_count == self.timeF:
                 dealImgThread.details_lock.acquire()
                 dealImgThread.face_details.append(shape)
@@ -69,29 +76,33 @@ class dealImgThread(threading.Thread):
                     backup = multiple
                     multiple = (height - d.width()) / 2
                     need_adjust_height = 0
+
                 top_cross = max(0 - d.top() + multiple + need_adjust_height * difference / 2, 0)
                 bottom_cross = max(d.bottom() + multiple + need_adjust_height * difference / 2 - height, 0)
                 top = max(d.top() - multiple - need_adjust_height * difference / 2 - bottom_cross, 0)
                 bottom = min(d.bottom() + multiple + need_adjust_height * difference / 2 + top_cross, height)
+
                 if width_overflow:
                     multiple = backup
+
                 if height_overflow:
                     multiple = (height - d.width()) / 2
                     need_adjust_width = 0
+
                 left_cross = max(0 - d.left() + multiple + need_adjust_width * difference / 2, 0)
                 right_cross = max(d.right() + multiple + need_adjust_width * difference / 2 - width, 0)
                 left = max(d.left() - multiple - need_adjust_width * difference / 2 - right_cross, 0)
                 right = min(d.right() + multiple + need_adjust_width * difference / 2 + left_cross, width)
-                # print(bottom - top, right - left)
+
                 save_img = self.frame[int(top):int(bottom), int(left):int(right)]
+
                 try:
                     save_img = cv2.resize(save_img, (380, 380))
                     dealImgThread.count_lock.acquire()
-                    dealImgThread.image_count += 1
-                    cv2.imwrite(self.outPath + "/" + str(dealImgThread.image_count) + '.png', save_img)
+                    cv2.imwrite(self.outPath + "/" + str(self.image_count) + '.png', save_img)
                     dealImgThread.count_lock.release()
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(e)
 
 
 def setModelPath(path):
@@ -107,6 +118,22 @@ def loadModel():
 
 
 def recognition(vc, outPath, detector, predictor, timeF, mode, timeout=60, total=100, multiThread=False):
+    '''
+
+    Args:
+        vc: opencv对象
+        outPath:
+        detector:
+        predictor:
+        timeF: 视频多少帧进行一次抽帧
+        mode:
+        timeout:
+        total:
+        multiThread:
+
+    Returns:
+
+    '''
     # 加载模型
     if mode:
         begin_time = time.time()
@@ -125,14 +152,17 @@ def recognition(vc, outPath, detector, predictor, timeF, mode, timeout=60, total
             if now_time - begin_time > timeout:
                 break
         res, frame = vc.read()  # 分帧读取视频
+
         if not res:
             break
         # cv2.imshow("img", frame)
         frame_count += 1
         if frame_count % timeF == 0:
             if multiThread:
-                dealImgThread(frame, outPath, detector, predictor, timeF, frame_count).start()
+                dealImgThread(frame, outPath, detector, predictor, timeF, frame_count, image_count).start()
+                image_count += 1
             else:
+
                 dots = detector(frame, 1)
                 backup = face_details[:]
                 face_details.clear()
@@ -180,6 +210,7 @@ def recognition(vc, outPath, detector, predictor, timeF, mode, timeout=60, total
                         bottom_cross = max(d.bottom() + multiple + need_adjust_height * difference / 2 - height, 0)
                         top = max(d.top() - multiple - need_adjust_height * difference / 2 - bottom_cross, 0)
                         bottom = min(d.bottom() + multiple + need_adjust_height * difference / 2 + top_cross, height)
+
                         if width_overflow:
                             multiple = backup
                         if height_overflow:
@@ -217,7 +248,7 @@ def dealLocalVideos(inPath, outPath, timeF=7, multiThread=False):
 
     # 视频处理
     videos = sorted(os.listdir(inPath))
-    start =13
+    start = 0
     for video in videos[start:]:
 
         print(f"第{start}组开始。。。")
@@ -233,7 +264,7 @@ def dealLocalVideos(inPath, outPath, timeF=7, multiThread=False):
 
 
 if __name__ == '__main__':
-    in_dir = r'E:\bilibili\video'
-    out_dir = r'E:\bilibili\img'  # 处理后图片存放位置
-    dealLocalVideos(in_dir, out_dir, multiThread=True)
+    in_dir = r'E:\抖音'
+    out_dir = r'E:\Face_Dataset\TikTok'  # 处理后图片存放位置
+    dealLocalVideos(in_dir, out_dir, timeF=7,multiThread=True)
 
