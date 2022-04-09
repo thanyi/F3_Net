@@ -264,7 +264,7 @@ def dealLocalVideos(inPath, outPath, timeF=7, multiThread=False):
 
 
 if __name__ == '__main__':
-    in_dir = r'E:\抖音'
-    out_dir = r'E:\Face_Dataset\TikTok'  # 处理后图片存放位置
+    in_dir = r'E:\抖音2\最终'
+    out_dir = r'E:\Face_Dataset\TikTok_2'  # 处理后图片存放位置
     dealLocalVideos(in_dir, out_dir, timeF=7,multiThread=True)
 

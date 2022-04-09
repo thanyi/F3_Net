@@ -59,17 +59,18 @@ def f3net_training():
     train_data_size = len(train_data)
     print('train_data_size:', train_data_size)
 
-    train_loader = DataLoader(train_data, 2, shuffle=True)
+    bz = 2
+    train_loader = DataLoader(train_data, bz, shuffle=True)
 
     # train
 
-    model = F3Net()
+    model = F3Net(mode = "FAD")
     model.to(device)
 
 
     if model.mode =="FAD":
         for param in model.FAD_eff.parameters():
-            # print(param)
+
             param.requires_grad = False
     elif model.mode =="LFS":
         for param in model.LFS_eff.parameters():
@@ -111,8 +112,8 @@ def f3net_training():
             optimizer.step()
 
             train_step += 1
-            if train_step % 1 == 0:
-                print(f"\r第{train_step}个batch训练完成 " + f"Loss: {loss.item()}",end=" ")
+            if train_step % 10 == 0:
+                print(f"{train_step}/{train_data_size//bz} batch训练完成 " + f"Loss: {loss.item()}")
 
 
         print("epoch训练次数：{}, Loss: {}".format(model.total_steps, model.loss.item()))

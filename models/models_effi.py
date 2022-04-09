@@ -190,7 +190,7 @@ class F3Net(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         # effnet 的全连接
 
-        if mode == 'LFS' or "FAD":
+        if mode == 'LFS' or mode == "FAD":
             self.fc = nn.Linear(2560, 1)
         else:
             self.fc = nn.Linear(5120, 1)
