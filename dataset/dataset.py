@@ -33,24 +33,24 @@ class DeepfakeDataset(Dataset):
         self.images, self.labels = self.load_csv("images.csv")
 
         # 对数据集进行划分
-        if mode == "train":  # 60%
-            self.train_images = self.images[int(0.2 * len(self.images)):int(0.8 * len(self.images))]
-            self.train_labels = self.labels[int(0.2 * len(self.labels)):int(0.8 * len(self.labels))]
+        if mode == "train":  # 80%
+            self.train_images = self.images[int(0.1 * len(self.images)):int(0.9 * len(self.images))]
+            self.train_labels = self.labels[int(0.1 * len(self.labels)):int(0.9 * len(self.labels))]
             self.images = self.train_images
             self.labels = self.train_labels
-        elif mode == "valid":  # 20% = 60%~80%
-            self.val_images = self.images[int(0.1 * len(self.images)):int(0.2 * len(self.images))]
-            self.val_images.extend(self.images[int(0.8 * len(self.images)):int(0.9 * len(self.images))])
-            self.val_labels = self.labels[int(0.1 * len(self.labels)):int(0.2 * len(self.labels))]
-            self.val_labels.extend(self.labels[int(0.8 * len(self.labels)):int(0.9 * len(self.labels))])
+        elif mode == "valid":  # 10% = 80%~90%
+            self.val_images = self.images[int(0.05 * len(self.images)):int(0.1 * len(self.images))]
+            self.val_images.extend(self.images[int(0.9 * len(self.images)):int(0.95 * len(self.images))])
+            self.val_labels = self.labels[int(0.05 * len(self.labels)):int(0.1 * len(self.labels))]
+            self.val_labels.extend(self.labels[int(0.9 * len(self.labels)):int(0.95 * len(self.labels))])
 
             self.images = self.val_images
             self.labels = self.val_labels
-        else:  # 20% = 80%~100%
-            self.test_images = self.images[:int(0.1 * len(self.images))]
-            self.test_images.extend(self.images[int(0.9 * len(self.images)):])
-            self.test_labels = self.labels[:int(0.1 * len(self.labels))]
-            self.test_labels.extend(self.labels[int(0.9 * len(self.labels)):])
+        else:  # 10% = 90%~100%
+            self.test_images = self.images[:int(0.05 * len(self.images))]
+            self.test_images.extend(self.images[int(0.95 * len(self.images)):])
+            self.test_labels = self.labels[:int(0.05 * len(self.labels))]
+            self.test_labels.extend(self.labels[int(0.95 * len(self.labels)):])
 
             self.images = self.test_images
             self.labels = self.test_labels
@@ -125,9 +125,9 @@ class DeepfakeDataset(Dataset):
         tf = transforms.Compose([
             lambda x: Image.open(x).convert("RGB"),  # string path => image data
             # transforms.Resize((int(self.resize), int(self.resize))),
-            transforms.Resize((int(self.resize * 1.25), int(self.resize * 1.25))),
+
             transforms.RandomRotation(30),
-            transforms.CenterCrop(self.resize),
+
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])

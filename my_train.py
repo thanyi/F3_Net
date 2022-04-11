@@ -1,7 +1,8 @@
 '''
 这个文件是我们项目自己准备使用的模型训练脚本文件
 '''
-
+import datetime
+import time
 
 import torch
 from sklearn.metrics import roc_curve
@@ -11,46 +12,17 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import auc as cal_auc
 from dataset.dataset import DeepfakeDataset
-from models.models_effi import *
+from models.models_effi_srm import *
 from sklearn.metrics import average_precision_score, precision_recall_curve, accuracy_score
-from utils.utils import evaluate,CenterLoss
+from utils.utils import evaluate
 import utils.f3net_conf as config
 from trainer import Trainer
 
 
 
-def modelsize(model, input, type_size=4):
-    para = sum([np.prod(list(p.size())) for p in model.parameters()])
-    print('Model {} : params: {:4f}M'.format(model._get_name(), para * type_size / 1000 / 1000))
-
-    input_ = input.clone()
-    input_.requires_grad_(requires_grad=False)
-
-    mods = list(model.modules())
-    out_sizes = []
-
-    for i in range(1, len(mods)):
-        m = mods[i]
-        if isinstance(m, nn.ReLU):
-            if m.inplace:
-                continue
-        out = m(input_)
-        out_sizes.append(np.array(out.size()))
-        input_ = out
-
-    total_nums = 0
-    for i in range(len(out_sizes)):
-        s = out_sizes[i]
-        nums = np.prod(np.array(s))
-        total_nums += nums
 
 
-    print('Model {} : intermedite variables: {:3f} M (without backward)'
-          .format(model._get_name(), total_nums * type_size / 1000 / 1000))
-    print('Model {} : intermedite variables: {:3f} M (with backward)'
-          .format(model._get_name(), total_nums * type_size*2 / 1000 / 1000))
-
-def f3net_training():
+def f3net_training(iftrained = False):
     device = torch.device('cuda')
 
     train_data = DeepfakeDataset(normal_root=config.normal_root, malicious_root=config.malicious_root, mode='train',
@@ -59,29 +31,30 @@ def f3net_training():
     train_data_size = len(train_data)
     print('train_data_size:', train_data_size)
 
-    bz = 2
+    bz = 1
     train_loader = DataLoader(train_data, bz, shuffle=True)
 
     # train
 
-    model = F3Net(mode = "FAD")
+    model = F3Net(mode = "Both")
+
+    if iftrained == True:
+        model.load_state_dict(
+            torch.load(r"C:\Users\ethanyi\Desktop\security_competition\models\F3net_effi_srm\model1.pth"))
+
     model.to(device)
 
 
     if model.mode =="FAD":
         for param in model.FAD_eff.parameters():
-
             param.requires_grad = False
-    elif model.mode =="LFS":
-        for param in model.LFS_eff.parameters():
-            # print(param)
+    elif model.mode =="SRM":
+        for param in model.SRM_eff.parameters():
             param.requires_grad = False
     else:
         for param in model.FAD_eff.parameters():
-            # print(param)
             param.requires_grad = False
-        for param in model.LFS_eff.parameters():
-            # print(param)
+        for param in model.SRM_eff.parameters():
             param.requires_grad = False
 
 
@@ -91,8 +64,8 @@ def f3net_training():
 
     times = 0
     for epoch in range(1, 10):
-        print("第{}个epoch".format(epoch))
-        train_step = 0
+        starttime = time.time()
+        print("----------------第{}个epoch--------------".format(epoch))
 
         for i, (X, y) in enumerate(train_loader):
             model.train()
@@ -102,7 +75,9 @@ def f3net_training():
             y = y.to(device)
 
             output = model(X)
+
             output = output.squeeze(-1)
+
             loss = loss_fn(output, y.float())
 
 
@@ -111,18 +86,23 @@ def f3net_training():
             loss.backward()
             optimizer.step()
 
-            train_step += 1
-            if train_step % 10 == 0:
-                print(f"{train_step}/{train_data_size//bz} batch训练完成 " + f"Loss: {loss.item()}")
 
+            if i % 10 == 0:
+                print(f"{i}/{train_data_size//bz} batch训练完成 " + f"Loss: {loss.item()}")
 
-        print("epoch训练次数：{}, Loss: {}".format(model.total_steps, model.loss.item()))
+            if i % 1000 ==0:
+                endtime = time.time()
+                during_time  = endtime - starttime
+                minutes, s = divmod(during_time, 60)
+                print(f"已用时间 : {minutes}分钟 。。。。。。。")
 
-        if epoch % 2 == 0:
-            times += 1
-            torch.save(model.model.state_dict(),
-                       "/content/drive/MyDrive/models/F3/test_6(git_version)/model{}.pth".format(times))
+        print("epoch训练次数：{}, Loss: {}".format(epoch, loss.item()))
 
+        if epoch % 1 == 0:
+            times += 2
+            torch.save(model.state_dict(),
+                       r"C:\Users\ethanyi\Desktop\security_competition\models\F3net_effi_srm\model{}.pth".format(times))
+            print("模型保存成功")
             model.eval()
 
             r_acc, auc = evaluate(model, config.normal_root, config.malicious_root, config.csv_root, "valid")
@@ -136,11 +116,13 @@ def f3net_training():
 
 if __name__ == '__main__':
     # model = F3Net()
-    # input = torch.ones(16, 3, 380, 380)
-    # print(input.shape)
-    # modelsize(model,input)
+    # model.load_state_dict(torch.load(r"C:\Users\ethanyi\Desktop\security_competition\models\F3net_effi_srm\model1.pth"))
+    # model.to("cuda:0")
+    # r_acc, auc = evaluate(model, config.normal_root, config.malicious_root, config.csv_root, "valid")
+    # print("本次epoch的acc为：" + str(r_acc))
+    # print("本次epoch的auc为：" + str(auc))
 
-    f3net_training()
+    f3net_training(iftrained=True)
 
 
 
