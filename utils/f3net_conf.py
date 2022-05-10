@@ -19,13 +19,15 @@ resize = 380
 ###########################
 #  路径
 ###########################
-normal_root = r"E:\Face_Dataset\celeb-Df\deepware(380_380)\celeb_real(380_380)"
-malicious_root = r"E:\Face_Dataset\celeb-Df\deepware(380_380)\celeb_syn(380_380)"
-csv_root = r"C:\Users\ethanyi\Desktop\security_competition\csv"
-
-model_path_name = r"G:\我的云端硬盘\models\F3\test_6(git_version)\model2.pth"
-xception_pretrained_path =r"D:\DeepFakeProject_in_D\deepfake_project\our_code\f3net\models\xception-b5690688.pth"
-efficient_pretrained_path=r"D:\DeepFakeProject_in_D\deepfake_project\eliminate_project\ycy\secruity-eye\screen_shot\face_recognition\deepware.pt"
+normal_root = r"/home/jiahaozhong/dataset/celeb-Df/celeb_real"
+malicious_root = r"/home/jiahaozhong/dataset/celeb-Df/celeb_syn"
+csv_root = r"/home/jiahaozhong/dataset/celeb-Df/csv"
 
 
+xception_pretrained_path =r""
+efficient_pretrained_path=r"D:\DeepFakeProject_in_D\deepfake_project\our_code\deepwake\weights\deepware.pt"
+
+dfdc_root = r"/home/jiahaozhong/dataset/Dfdc/Dfdc_real"
+dfdc_syn_root = r"/home/jiahaozhong/dataset/Dfdc/Dfdc_syn"
+dfdc_csv_root = r"/home/jiahaozhong/dataset/Dfdc/csv"
 

@@ -15,7 +15,7 @@ import types
 
 import timm.models.efficientnet as effnet
 
-SRM_npy = np.load(r'C:\Users\ethanyi\Desktop\security_competition\F3_Net\models\SRM_Kernels.npy')
+SRM_npy = np.load(r'C:\Users\ethanyi\Desktop\大三下\F3_Net\models\SRM_Kernels.npy')
 
 class EffNet(nn.Module):
     def __init__(self, arch='b7'):

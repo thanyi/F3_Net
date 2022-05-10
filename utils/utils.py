@@ -4,7 +4,7 @@ import numpy as np
 import random
 from torch.utils import data
 from torchvision import transforms as trans
-from sklearn.metrics import average_precision_score, precision_recall_curve, accuracy_score
+from sklearn.metrics import recall_score, precision_score, accuracy_score
 from sklearn.metrics import roc_curve
 from sklearn.metrics import auc as cal_auc
 from PIL import Image
@@ -12,7 +12,7 @@ import sys
 import logging
 
 from torch import nn
-
+from sklearn.metrics import confusion_matrix
 from dataset.dataset import DeepfakeDataset
 from trainer import Trainer
 
@@ -82,7 +82,8 @@ def get_dataset(name = 'train', size=299, root='E:\\Dataset_pre\\ff++_dataset\\'
         dset_lst.append(dset)
     return torch.utils.data.ConcatDataset(dset_lst), total_len
 
-def evaluate(model, normal_root,malicious_root,csv_root, mode='valid',):
+
+def evaluate(model, normal_root,malicious_root,csv_root, mode='test',):
 
     my_dataset = DeepfakeDataset(normal_root=normal_root, malicious_root=malicious_root, mode=mode, resize=380,
                                  csv_root=csv_root)
@@ -113,7 +114,7 @@ def evaluate(model, normal_root,malicious_root,csv_root, mode='valid',):
             y_pred.extend(output.sigmoid().flatten().tolist())
             y_true.extend(y.flatten().tolist())
 
-            print(f"\r----------------当前进度: {i}/{len(dataloader)} ----------------------",end=" ")
+        print(" ")
 
         y_true, y_pred = np.array(y_true), np.array(y_pred)
         fpr, tpr, thresholds = roc_curve(y_true, y_pred, pos_label=1)
@@ -127,8 +128,11 @@ def evaluate(model, normal_root,malicious_root,csv_root, mode='valid',):
                 y_pred[i] = 1
 
         r_acc = accuracy_score(y_true, y_pred)
+        con_mat = confusion_matrix(y_true, y_pred)
+        recall = recall_score(y_true, y_pred)
+        precision = precision_score(y_true, y_pred)
 
-    return r_acc, AUC
+    return r_acc, AUC, con_mat, recall, precision
 
 
 

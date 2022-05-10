@@ -1,39 +1,49 @@
 '''
 这个文件主要是针对在colab上调试运行的时候使用的，所以可能是导致不能进行在本地运行
 '''
+import os
 import sys
+from glob import glob
+
 from torch.utils.data import DataLoader
-from models.models import *
-from models.xception import *
+from models.models_effi_srm_se_2 import *
+
 import numpy as np
 from dataset.dataset import DeepfakeDataset
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import roc_curve
 from sklearn.metrics import auc as cal_auc
 from utils.utils import evaluate
-import utils.f3net_conf as f3_config
+import utils.f3net_conf as config
 
 
 
-def f3netTest(malicious_root):
+def modelTest():
 
-    datasetname = malicious_root.split('/')[-1]
 
     # 模型调用
-    f3net = F3Net()
+    model = F3Net()
+    model_list = []
 
-    f3net.load_state_dict(torch.load(f3_config.model_path_name))
-    f3net.to(f3_config.device)
-    f3net.eval()
 
-    r_acc, auc = evaluate(f3net, f3_config.normal_root, f3_config.malicious_root, f3_config.csv_root, "test")
-    print(f3_config.model_path_name+"模型在{}数据集上的acc为：".format(datasetname) + str(r_acc))
-    print(f3_config.model_path_name+"模型在{}数据集上的auc为：".format(datasetname) + str(auc))
+    root = r"/home/jiahaozhong/model/f3net/f3_eff_srm_se"
 
+    model_list += glob(os.path.join(root,"model?.pth"))
+
+    for model_name in model_list:
+
+        model.load_state_dict(torch.load(model_name))
+        model.to(config.device)
+        model.eval()
+        print(f"当前模型文件：{model_name}")
+        r_acc, auc = evaluate(model, config.dfdc_root , config.dfdc_syn_root, config.dfdc_csv_root, "test")
+        print(model_name+"模型在DFDC数据集上的acc为：" + str(r_acc))
+        print(model_name+"模型在DFDC数据集上的auc为：" + str(auc))
+        print("---------------------------")
 
 
 
 if __name__ == '__main__':
-    malicious_root=config.malicious_root
 
-    f3netTest(malicious_root)
+
+    modelTest()
