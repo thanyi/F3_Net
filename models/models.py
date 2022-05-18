@@ -165,7 +165,7 @@ class F3Net(nn.Module):
         函数所做
             加载Xception，作为FAD_xcep
             调用get_xcep_state_dict()加载预训练模型
-            更改FAD_xcep的conv1，理由好像是为了平衡模型
+            更改FAD_xcep的conv1，理由是为了平衡模型
 
         Returns:
 
@@ -190,7 +190,7 @@ class F3Net(nn.Module):
         函数所做
             加载Xception，作为LFS_xcep
             调用get_xcep_state_dict()加载预训练模型
-            更改LFS_xcep的conv1，理由好像是为了平衡模型
+            更改LFS_xcep的conv1，理由是为了平衡模型
 
         Returns:
 
