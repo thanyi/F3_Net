@@ -49,7 +49,7 @@ def f3net_training(iftrained=False):
     train_data_size = len(train_data)
     print('train_data_size:', train_data_size)
 
-    bz = 4
+    bz = 8
     train_loader = DataLoader(train_data, bz, shuffle=True)
 
     # train
@@ -124,7 +124,7 @@ def f3net_training(iftrained=False):
         if epoch % 2 == 0:
             times += 1
             torch.save(model.state_dict(),
-                       r"/home/jiahaozhong/model/f3net/f3_eff_srm_se/model_eff_se_3(drawing){}.pth".format(times))
+                       r"/hy-nas/model/model-eff-se-3_{}.pth".format(times))
             print("模型保存成功")
             model.eval()
 
