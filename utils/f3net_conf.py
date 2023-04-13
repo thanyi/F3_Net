@@ -29,5 +29,7 @@ model_path_name = r"G:\我的云端硬盘\models\F3\test_6(git_version)\model2.p
 xception_pretrained_path =r"D:\DeepFakeProject_in_D\deepfake_project\our_code\f3net\models\xception-b5690688.pth"
 efficient_pretrained_path=r"/hy-nas/F3_Net/utils/deepware.pt"
 
-
+dfdc_syn_root=r"/hy-tmp/Dfdc/Dfdc_syn"
+dfdc_real_root=r"/hy-tmp/Dfdc/Dfdc_real"
+dfdc_csv_root=r"/hy-tmp/Dfdc/csv"
 
