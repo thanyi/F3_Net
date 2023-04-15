@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import auc as cal_auc
 from dataset.dataset import DeepfakeDataset
-from models.models_effi_srm_se_3 import *
+from models.models_effi_srm_se_2 import *
 from sklearn.metrics import average_precision_score, precision_recall_curve, accuracy_score
 from utils.utils import evaluate
 import utils.f3net_conf as config
@@ -22,23 +22,23 @@ import os
 
 def f3net_training(iftrained=False):
     # 将 test accuracy 保存到 "tensorboard/train" 文件夹
-    log_dir = os.path.join('tensorboard', 'test')
+    log_dir = os.path.join('/tf_logs', 'test')
     test_writer = SummaryWriter(log_dir=log_dir)
 
     # 将 valid accuracy 保存到 "tensorboard/valid" 文件夹
-    log_dir = os.path.join('tensorboard', 'valid')
+    log_dir = os.path.join('/tf_logs', 'valid')
     valid_writer = SummaryWriter(log_dir=log_dir)
 
     # 将 loss 保存到 "tensorboard/loss" 文件夹
-    log_dir = os.path.join('tensorboard', 'loss')
+    log_dir = os.path.join('/tf_logs', 'loss')
     loss_writer = SummaryWriter(log_dir=log_dir)
 
     # 将 recall 保存到 "tensorboard/recall" 文件夹
-    log_dir = os.path.join('tensorboard', 'recall')
+    log_dir = os.path.join('/tf_logs', 'recall')
     recall_writer = SummaryWriter(log_dir=log_dir)
 
     # 将 precision 保存到 "tensorboard/precision" 文件夹
-    log_dir = os.path.join('tensorboard', 'precision')
+    log_dir = os.path.join('/tf_logs', 'precision')
     precision_writer = SummaryWriter(log_dir=log_dir)
 
     device = config.device
@@ -49,7 +49,7 @@ def f3net_training(iftrained=False):
     train_data_size = len(train_data)
     print('train_data_size:', train_data_size)
 
-    bz = 8
+    bz = 4
     train_loader = DataLoader(train_data, bz, shuffle=True)
 
     # train
@@ -58,7 +58,7 @@ def f3net_training(iftrained=False):
 
     if iftrained == True:
         model.load_state_dict(
-            torch.load(r"/home/jiahaozhong/model/f3net/f3_eff_lfs/model4.pth"))
+            torch.load(r"/hy-nas/model/model-eff-se-3_1.pth"))
 
     model.to(device)
 
@@ -124,10 +124,14 @@ def f3net_training(iftrained=False):
         if epoch % 2 == 0:
             times += 1
             torch.save(model.state_dict(),
-                       r"/hy-nas/model/model-eff-se-3_{}.pth".format(times))
+                       r"/hy-nas/model/model-eff-se-2_{}.pth".format(times))
             print("模型保存成功")
             model.eval()
-
+            
+                  
+                  
+                  
+                  
         if epoch % 1 == 0:
             r_acc, auc ,con_mat, recall ,precision= evaluate(model, config.normal_root, config.malicious_root, config.csv_root, "valid")
             print("本次epoch的acc为：" + str(r_acc))
@@ -137,7 +141,12 @@ def f3net_training(iftrained=False):
             valid_writer.add_scalar('Accuracy (Train)', r_acc , epoch+1)
             recall_writer.add_scalar('precision and Recall (Train)', recall , epoch+1)
             precision_writer.add_scalar('precision and Recall (Train)', precision , epoch+1)
-
+            
+            with open(f"/hy-nas/model/model-eff-se-2_{times}.txt","a+") as f:
+                f.writeline('Accuracy (Train): ' + str(r_acc*100) + "%" + '\n')
+                f.writeline('precision and Recall (Train): ' + str(recall*100) + "%" + '\n')
+                f.writeline('precision and Recall (Train): ' + str(precision*100) + "%" + '\n')
+                            
             model.train()
 
         if epoch % 1 == 0:
@@ -150,6 +159,10 @@ def f3net_training(iftrained=False):
             recall_writer.add_scalar('precision and Recall (Test)', recall, epoch + 1)
             test_writer.add_scalar('Accuracy (Test)', r_acc, epoch + 1)
 
+            with open(f"/hy-nas/model/model-eff-se-2_{times}.txt","a+") as f:
+                f.writeline('Accuracy (Test): ' + str(r_acc*100) + "%" + '\n')
+                f.writeline('precision and Recall (Test): ' + str(recall*100) + "%" + '\n')
+                f.writeline('precision and Recall (Test): ' + str(precision*100) + "%" + '\n')
             model.train()
 
         scheduler.step()
@@ -163,7 +176,7 @@ if __name__ == '__main__':
     # print("本次epoch的acc为：" + str(r_acc))
     # print("本次epoch的auc为：" + str(auc))
 
-    f3net_training(iftrained=False)
+    f3net_training(iftrained=Flase)
 
 
 
