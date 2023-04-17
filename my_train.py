@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import auc as cal_auc
 from dataset.dataset import DeepfakeDataset
-from models.models_effi_srm_se_3 import *
+from models.models_effi_srm_se_2 import *
 from sklearn.metrics import average_precision_score, precision_recall_curve, accuracy_score
 from utils.utils import evaluate
 import utils.f3net_conf as config
@@ -22,23 +22,23 @@ import os
 
 def f3net_training(iftrained=False):
     # 将 test accuracy 保存到 "tensorboard/train" 文件夹
-    log_dir = os.path.join('tensorboard', 'test')
+    log_dir = os.path.join('/tf_logs', 'test')
     test_writer = SummaryWriter(log_dir=log_dir)
 
     # 将 valid accuracy 保存到 "tensorboard/valid" 文件夹
-    log_dir = os.path.join('tensorboard', 'valid')
+    log_dir = os.path.join('/tf_logs', 'valid')
     valid_writer = SummaryWriter(log_dir=log_dir)
 
     # 将 loss 保存到 "tensorboard/loss" 文件夹
-    log_dir = os.path.join('tensorboard', 'loss')
+    log_dir = os.path.join('/tf_logs', 'loss')
     loss_writer = SummaryWriter(log_dir=log_dir)
 
     # 将 recall 保存到 "tensorboard/recall" 文件夹
-    log_dir = os.path.join('tensorboard', 'recall')
+    log_dir = os.path.join('/tf_logs', 'recall')
     recall_writer = SummaryWriter(log_dir=log_dir)
 
     # 将 precision 保存到 "tensorboard/precision" 文件夹
-    log_dir = os.path.join('tensorboard', 'precision')
+    log_dir = os.path.join('/tf_logs', 'precision')
     precision_writer = SummaryWriter(log_dir=log_dir)
 
     device = config.device
@@ -49,7 +49,7 @@ def f3net_training(iftrained=False):
     train_data_size = len(train_data)
     print('train_data_size:', train_data_size)
 
-    bz = 8
+    bz = 4
     train_loader = DataLoader(train_data, bz, shuffle=True)
 
     # train
@@ -60,7 +60,7 @@ def f3net_training(iftrained=False):
 
     if iftrained == True:
         model.load_state_dict(
-            torch.load(r"/home/jiahaozhong/model/f3net/f3_eff_lfs/model4.pth"))
+            torch.load(r"/hy-nas/model/model-eff-se-3_1.pth"))
 
     model.to(device)
 
