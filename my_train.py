@@ -108,7 +108,7 @@ def f3net_training(iftrained=False):
 
             running_loss += loss.item()
             running_loss_rate +=1
-            if i % 100 == 0:
+            if i % 500 == 0:
                 print(f"{i}/{train_data_size // bz} batch训练完成 " + f"Loss: {loss.item()}")
 
             if i % 1000 == 0:
@@ -144,6 +144,7 @@ def f3net_training(iftrained=False):
                 f.write("Accuracy (Train)：" + str(round(r_acc, 2) * 100) + "%")
                 f.write("Recall (Train)：" + str(round(recall, 2) * 100) + "%")
                 f.write("precision (Train)：" + str(round(precision, 2) * 100) + "%")
+                f.write("\n")
 
 
             r_acc, auc ,con_mat ,recall, precision = evaluate(model, config.dfdc_root, config.dfdc_syn_root, config.dfdc_csv_root, "test")
