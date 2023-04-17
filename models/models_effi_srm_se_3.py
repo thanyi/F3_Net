@@ -1,6 +1,6 @@
 """
 这个文件是包含了efficientNet+srm
-            FAD+SRM+SE
+            LFS+SRM+SE
             同时尝试只使用一个efficientNet网络
 """
 from PIL import Image

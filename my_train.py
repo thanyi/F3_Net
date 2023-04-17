@@ -55,6 +55,8 @@ def f3net_training(iftrained=False):
     # train
 
     model = F3Net(mode="Both")
+    model_name = input("请输入model_name")
+
 
     if iftrained == True:
         model.load_state_dict(
@@ -78,8 +80,8 @@ def f3net_training(iftrained=False):
         param.requires_grad = True
 
     loss_fn = nn.BCEWithLogitsLoss().to(device)
-    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.002)
-    scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=16, eta_min=5e-6)
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.1)
+    scheduler = lr_scheduler.StepLR(optimizer=optimizer,step_size=1,gamma=0.2)
 
     times = 0
     running_loss = 0.0
@@ -121,14 +123,14 @@ def f3net_training(iftrained=False):
 
         print("epoch训练次数：{}, Loss: {}".format(epoch, loss.item()))
 
-        if epoch % 2 == 0:
+        if epoch % 1 == 0:
             times += 1
             torch.save(model.state_dict(),
-                       r"/hy-nas/model/model-eff-se-3_{}.pth".format(times))
+                       f"/hy-nas/model/{model_name}_{times}.pth")
             print("模型保存成功")
             model.eval()
 
-        if epoch % 1 == 0:
+
             r_acc, auc ,con_mat, recall ,precision= evaluate(model, config.normal_root, config.malicious_root, config.csv_root, "valid")
             print("本次epoch的acc为：" + str(r_acc))
             print("本次epoch的auc为：" + str(auc))
@@ -138,9 +140,12 @@ def f3net_training(iftrained=False):
             recall_writer.add_scalar('precision and Recall (Train)', recall , epoch+1)
             precision_writer.add_scalar('precision and Recall (Train)', precision , epoch+1)
 
-            model.train()
+            with open (f"/hy-nas/model/{model_name}_{times}.txt","a+") as f:
+                f.write("Accuracy (Train)：" + str(round(r_acc, 2) * 100) + "%")
+                f.write("Recall (Train)：" + str(round(recall, 2) * 100) + "%")
+                f.write("precision (Train)：" + str(round(precision, 2) * 100) + "%")
 
-        if epoch % 1 == 0:
+
             r_acc, auc ,con_mat ,recall, precision = evaluate(model, config.dfdc_root, config.dfdc_syn_root, config.dfdc_csv_root, "test")
             print("-------本次epoch在DFDC上的acc为：" + str(r_acc))
             print("-------本次epoch在DFDC上的auc为：" + str(auc))
@@ -149,6 +154,11 @@ def f3net_training(iftrained=False):
             precision_writer.add_scalar('precision and Recall (Test)', precision, epoch + 1)
             recall_writer.add_scalar('precision and Recall (Test)', recall, epoch + 1)
             test_writer.add_scalar('Accuracy (Test)', r_acc, epoch + 1)
+
+            with open (f"/hy-nas/model/{model_name}_{times}.txt","a+") as f:
+                f.write("Accuracy (Test)：" + str(round(r_acc, 2) * 100) + "%")
+                f.write("Recall (Test)：" + str(round(recall, 2) * 100) + "%")
+                f.write("precision (Test)：" + str(round(precision, 2) * 100) + "%")
 
             model.train()
 

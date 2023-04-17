@@ -122,6 +122,7 @@ class HPF_SRM(nn.Module):
         self.SRM.weight.data = self.Weight
         self.SRM.weight.requires_grad = False
         self.Padding = torch.nn.ReplicationPad2d(2)
+
     def forward(self, x):
         '''
 
