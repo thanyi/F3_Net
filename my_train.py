@@ -55,7 +55,7 @@ def f3net_training(iftrained=False):
     # train
 
     model = F3Net(mode="Both")
-    model_name = input("请输入model_name")
+    model_name = input("请输入model_name: ")
 
 
     if iftrained == True:
@@ -80,8 +80,8 @@ def f3net_training(iftrained=False):
         param.requires_grad = True
 
     loss_fn = nn.BCEWithLogitsLoss().to(device)
-    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.1)
-    scheduler = lr_scheduler.StepLR(optimizer=optimizer,step_size=1,gamma=0.2)
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.004)
+    lr_scheduler.CosineAnnealingLR(optimizer, T_max=4, eta_min=5e-6)
 
     times = 0
     running_loss = 0.0
@@ -136,14 +136,14 @@ def f3net_training(iftrained=False):
             print("本次epoch的auc为：" + str(auc))
             print(f"{con_mat}为本次epoch的混淆矩阵" )
 
-            valid_writer.add_scalar('Accuracy (Train)', r_acc , epoch+1)
-            recall_writer.add_scalar('precision and Recall (Train)', recall , epoch+1)
-            precision_writer.add_scalar('precision and Recall (Train)', precision , epoch+1)
+            valid_writer.add_scalar('Accuracy (valid)', r_acc , epoch+1)
+            recall_writer.add_scalar('precision and Recall (valid)', recall , epoch+1)
+            precision_writer.add_scalar('precision and Recall (valid)', precision , epoch+1)
 
             with open (f"/hy-nas/model/{model_name}_{times}.txt","a+") as f:
-                f.write("Accuracy (Train)：" + str(round(r_acc, 2) * 100) + "%")
-                f.write("Recall (Train)：" + str(round(recall, 2) * 100) + "%")
-                f.write("precision (Train)：" + str(round(precision, 2) * 100) + "%")
+                f.write("Accuracy (valid)：" + str(round(r_acc, 4) * 100) + "%")
+                f.write("Recall (valid)：" + str(round(recall, 4) * 100) + "%")
+                f.write("precision (valid)：" + str(round(precision, 4) * 100) + "%")
                 f.write("\n")
 
 
@@ -152,14 +152,14 @@ def f3net_training(iftrained=False):
             print("-------本次epoch在DFDC上的auc为：" + str(auc))
             print(f"{con_mat}为本次epoch的混淆矩阵")
 
-            precision_writer.add_scalar('precision and Recall (Test)', precision, epoch + 1)
-            recall_writer.add_scalar('precision and Recall (Test)', recall, epoch + 1)
-            test_writer.add_scalar('Accuracy (Test)', r_acc, epoch + 1)
+            precision_writer.add_scalar('precision and Recall (dfdc)', precision, epoch + 1)
+            recall_writer.add_scalar('precision and Recall (dfdc)', recall, epoch + 1)
+            test_writer.add_scalar('Accuracy (dfdc)', r_acc, epoch + 1)
 
             with open (f"/hy-nas/model/{model_name}_{times}.txt","a+") as f:
-                f.write("Accuracy (Test)：" + str(round(r_acc, 2) * 100) + "%")
-                f.write("Recall (Test)：" + str(round(recall, 2) * 100) + "%")
-                f.write("precision (Test)：" + str(round(precision, 2) * 100) + "%")
+                f.write("Accuracy (dfdc)：" + str(round(r_acc, 4) * 100) + "%")
+                f.write("Recall (dfdc)：" + str(round(recall, 4) * 100) + "%")
+                f.write("precision (dfdc)：" + str(round(precision, 4) * 100) + "%")
 
             model.train()
 
