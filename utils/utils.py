@@ -91,7 +91,7 @@ def evaluate(model, normal_root,malicious_root,csv_root, mode='test',):
     print("This is the {} {} dataset!".format(malicious_name,mode))
     print("dataset size:{}".format(len(my_dataset)))
 
-    bz = 8
+    bz = 16
     # torch.cache.empty_cache()
     with torch.no_grad():
         y_true, y_pred = [], []
@@ -117,15 +117,16 @@ def evaluate(model, normal_root,malicious_root,csv_root, mode='test',):
         print(" ")
 
         y_true, y_pred = np.array(y_true), np.array(y_pred)
+        y_pred = np.where(y_pred >= 0.5, 1, 0)
         fpr, tpr, thresholds = roc_curve(y_true, y_pred, pos_label=1)
 
         AUC = cal_auc(fpr, tpr)
 
-        for i in range(len(y_pred)):
-            if y_pred[i] < 0.5:
-                y_pred[i] = 0
-            else:
-                y_pred[i] = 1
+#         for i in range(len(y_pred)):
+#             if y_pred[i] < 0.5:
+#                 y_pred[i] = 0
+#             else:
+#                 y_pred[i] = 1
 
         r_acc = accuracy_score(y_true, y_pred)
         con_mat = confusion_matrix(y_true, y_pred)
