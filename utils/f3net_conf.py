@@ -19,9 +19,9 @@ resize = 380
 ###########################
 #  路径
 ###########################
-normal_root = r"/hy-tmp/celeb_real"
-malicious_root = r"/hy-tmp/celeb_syn"
-csv_root = r"/hy-tmp/csv"
+normal_root = r"/hy-tmp/celeb-df/celeb-real"
+malicious_root = r"/hy-tmp/celeb-df/celeb-syn"
+csv_root = r"/hy-tmp/celeb-df/csv"
 
 dfdc_root = r"/hy-tmp/Dfdc"
 
