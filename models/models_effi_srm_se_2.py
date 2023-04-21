@@ -315,7 +315,7 @@ if __name__ == '__main__':
 
     tf = transforms.Compose([
         lambda x: Image.open(x).convert("RGB"),  # string path => image data
-        transforms.Resize(380),
+        # transforms.Resize(380),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225])

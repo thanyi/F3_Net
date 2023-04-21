@@ -81,7 +81,7 @@ def f3net_training(iftrained=False):
 
     loss_fn = nn.BCEWithLogitsLoss().to(device)
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.004)
-    lr_scheduler.CosineAnnealingLR(optimizer, T_max=4, eta_min=5e-6)
+    scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=8, eta_min=5e-6)
 
     times = 0
     running_loss = 0.0
