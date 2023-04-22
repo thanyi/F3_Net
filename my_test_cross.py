@@ -56,15 +56,27 @@ def modelTest():
 
     model_name = "deepware"
 
-    # model.load_state_dict(torch.load(r"/hy-nas/F3_Net/utils/deepware.pt"))
+
     model.load_state_dict(torch.load(root))
 
     model.to(config.device)
     model.eval()
     print(f"当前模型文件：{root}")
     data_name = input ("要测试的数据集是：")
+    if data_name == "dfdc":
+        syn_root = config.dfdc_syn_root
+        csv_root = config.dfdc_csv_root
+    elif data_name == "celeb-df":
+        real_root = config.normal_root
+        syn_root = config.malicious_root
+        csv_root = config.csv_root
+    else :
+        print ("data name error!")
 
-    r_acc, auc ,con_mat ,recall, precision  = evaluate(model, config.celeb_real_root , config.celeb_syn_root, config.celeb_csv_root, "test")
+
+
+
+    r_acc, auc ,con_mat ,recall, precision  = evaluate(model, real_root , syn_root , csv_root , "test")
     print(model_name+f"模型在{data_name}数据集上的acc为：" + str(r_acc))
     print(model_name+f"模型在{data_name}数据集上的auc为：" + str(auc))
     print(model_name+f"模型在{data_name}数据集上的recall为：" + str(recall))
