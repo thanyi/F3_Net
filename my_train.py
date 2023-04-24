@@ -20,7 +20,27 @@ from trainer import Trainer
 from torch.utils.tensorboard import SummaryWriter
 import os
 
+
+def record(r_acc, auc ,con_mat ,recall, precision,epoch,data_name):
+    print("本次epoch的acc为：" + str(r_acc))
+    print("本次epoch的auc为：" + str(auc))
+    print(f"{con_mat}为本次epoch的混淆矩阵" )
+
+    valid_writer.add_scalar(f'Accuracy ({data_name})', r_acc , epoch+1)
+    recall_writer.add_scalar(f'precision and Recall ({data_name})', recall , epoch+1)
+    precision_writer.add_scalar(f'precision and Recall ({data_name})', precision , epoch+1)
+
+    with open (f"/hy-nas/model/{model_name}_{epoch}.txt","a+") as f:
+        f.write(f"Accuracy ({data_name})：" + "{:.2f}%\n".format(round(r_acc, 4) * 100) )
+        f.write(f"Recall ({data_name})：" + "{:.2f}%\n".format(round(recall, 4) * 100) )
+        f.write(f"precision ({data_name})：" + "{:.2f}%\n".format(round(precision, 4) * 100) )
+        f.write(f"AUC ({data_name})：" + "{:.2f}%\n".format(round(auc, 4) * 100) )
+        f.write("\n")
+
+
+
 def f3net_training(iftrained=False):
+    global test_writer, valid_writer, loss_writer, recall_writer, precision_writer,model_name
     # 将 test accuracy 保存到 "tensorboard/train" 文件夹
     log_dir = os.path.join('/tf_logs', 'test')
     test_writer = SummaryWriter(log_dir=log_dir)
@@ -41,11 +61,12 @@ def f3net_training(iftrained=False):
     log_dir = os.path.join('/tf_logs', 'precision')
     precision_writer = SummaryWriter(log_dir=log_dir)
 
+
     device = config.device
 
-    train_data = DeepfakeDataset(normal_root=config.normal_root, malicious_root=config.malicious_root, mode='train',
+    train_data = DeepfakeDataset(normal_root=config.ff_real_root, malicious_root=config.ff_syn_root, mode='train',
                                  resize=380,
-                                 csv_root=config.csv_root)
+                                 csv_root=config.ff_csv_root)
     train_data_size = len(train_data)
     print('train_data_size:', train_data_size)
 
@@ -126,54 +147,25 @@ def f3net_training(iftrained=False):
         if epoch % 1 == 0:
             times += 1
             torch.save(model.state_dict(),
-                       f"/hy-nas/model/{model_name}_{times}.pth")
+                       f"/hy-nas/model/{model_name}_{epoch}.pth")
             print("模型保存成功")
             model.eval()
 
+            r_acc, auc, con_mat, recall, precision = evaluate(model, config.ff_real_root, config.ff_syn_root,config.ff_csv_root, "test")
+            record(r_acc, auc, con_mat, recall, precision,epoch, data_name='ff_test')
 
-            r_acc, auc ,con_mat, recall ,precision= evaluate(model, config.normal_root, config.malicious_root, config.csv_root, "valid")
-            print("本次epoch的acc为：" + str(r_acc))
-            print("本次epoch的auc为：" + str(auc))
-            print(f"{con_mat}为本次epoch的混淆矩阵" )
-
-            valid_writer.add_scalar('Accuracy (valid)', r_acc , epoch+1)
-            recall_writer.add_scalar('precision and Recall (valid)', recall , epoch+1)
-            precision_writer.add_scalar('precision and Recall (valid)', precision , epoch+1)
-
-            with open (f"/hy-nas/model/{model_name}_{times}.txt","a+") as f:
-                f.write("Accuracy (valid)：" + str(round(r_acc, 4) * 100) + "%")
-                f.write("Recall (valid)：" + str(round(recall, 4) * 100) + "%")
-                f.write("precision (valid)：" + str(round(precision, 4) * 100) + "%")
-                f.write("\n")
+            r_acc, auc ,con_mat, recall ,precision= evaluate(model, config.normal_root, config.malicious_root, config.csv_root, "test")
+            record(r_acc, auc ,con_mat, recall ,precision,epoch, data_name='celeb_test')
 
 
             r_acc, auc ,con_mat ,recall, precision = evaluate(model, config.dfdc_root, config.dfdc_syn_root, config.dfdc_csv_root, "test")
-            print("-------本次epoch在DFDC上的acc为：" + str(r_acc))
-            print("-------本次epoch在DFDC上的auc为：" + str(auc))
-            print(f"{con_mat}为本次epoch的混淆矩阵")
-
-            precision_writer.add_scalar('precision and Recall (dfdc)', precision, epoch + 1)
-            recall_writer.add_scalar('precision and Recall (dfdc)', recall, epoch + 1)
-            test_writer.add_scalar('Accuracy (dfdc)', r_acc, epoch + 1)
-
-            with open (f"/hy-nas/model/{model_name}_{times}.txt","a+") as f:
-                f.write("Accuracy (dfdc)：" + str(round(r_acc, 4) * 100) + "%")
-                f.write("Recall (dfdc)：" + str(round(recall, 4) * 100) + "%")
-                f.write("precision (dfdc)：" + str(round(precision, 4) * 100) + "%")
-
+            record(r_acc, auc, con_mat, recall, precision, epoch, data_name='dfdc_test')
             model.train()
 
         scheduler.step()
 
 
 if __name__ == '__main__':
-    # model = F3Net()
-    # model.load_state_dict(torch.load(r"C:\Users\ethanyi\Desktop\security_competition\models\F3net_effi_srm\model1.pth"))
-    # model.to("cuda:0")
-    # r_acc, auc = evaluate(model, config.normal_root, config.malicious_root, config.csv_root, "valid")
-    # print("本次epoch的acc为：" + str(r_acc))
-    # print("本次epoch的auc为：" + str(auc))
-
     f3net_training(iftrained=False)
 
 

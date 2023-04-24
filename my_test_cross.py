@@ -64,12 +64,17 @@ def modelTest():
     print(f"当前模型文件：{root}")
     data_name = input ("要测试的数据集是：")
     if data_name == "dfdc":
+        real_root = config.dfdc_real_root
         syn_root = config.dfdc_syn_root
         csv_root = config.dfdc_csv_root
     elif data_name == "celeb-df":
-        real_root = config.normal_root
-        syn_root = config.malicious_root
-        csv_root = config.csv_root
+        real_root = config.celeb_real_root
+        syn_root = config.celeb_syn_root
+        csv_root = config.celeb_csv_root
+    elif data_name == "ff++":
+        real_root = config.ff_real_root
+        syn_root = config.ff_syn_root
+        csv_root = config.ff_csv_root
     else :
         print ("data name error!")
 

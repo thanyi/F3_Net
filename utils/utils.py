@@ -122,11 +122,7 @@ def evaluate(model, normal_root,malicious_root,csv_root, mode='test',):
 
         AUC = cal_auc(fpr, tpr)
 
-#         for i in range(len(y_pred)):
-#             if y_pred[i] < 0.5:
-#                 y_pred[i] = 0
-#             else:
-#                 y_pred[i] = 1
+
 
         r_acc = accuracy_score(y_true, y_pred)
         con_mat = confusion_matrix(y_true, y_pred)
