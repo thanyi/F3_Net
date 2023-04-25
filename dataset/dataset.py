@@ -47,10 +47,10 @@ class DeepfakeDataset(Dataset):
             self.images = self.val_images
             self.labels = self.val_labels
         else:  # 10% = 90%~100%
-            self.test_images = self.images[:int(0.05 * len(self.images))]
-            self.test_images.extend(self.images[int(0.95 * len(self.images)):])
-            self.test_labels = self.labels[:int(0.05 * len(self.labels))]
-            self.test_labels.extend(self.labels[int(0.95 * len(self.labels)):])
+            self.test_images = self.images[:int(0.02 * len(self.images))]
+            self.test_images.extend(self.images[int(0.98 * len(self.images)):])
+            self.test_labels = self.labels[:int(0.02 * len(self.labels))]
+            self.test_labels.extend(self.labels[int(0.98 * len(self.labels)):])
 
             self.images = self.test_images
             self.labels = self.test_labels

@@ -80,8 +80,9 @@ def f3net_training(iftrained=False):
 
 
     if iftrained == True:
-        model.load_state_dict(
-            torch.load(r"/hy-nas/model/model-eff-se-3_1.pth"))
+        model_to_load = input("载入的模型为：")
+        model.load_state_dict(torch.load(f"/hy-nas/model/{model_to_load}"))
+        print(f"{model_to_load}载入成功")
 
     model.to(device)
 
@@ -104,7 +105,6 @@ def f3net_training(iftrained=False):
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.004)
     scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=8, eta_min=5e-6)
 
-    times = 0
     running_loss = 0.0
     running_loss_rate = 0
 
@@ -143,12 +143,11 @@ def f3net_training(iftrained=False):
                 running_loss_rate = 0
 
         print("epoch训练次数：{}, Loss: {}".format(epoch, loss.item()))
+        torch.save(model.state_dict(),
+                   f"/hy-nas/model/{model_name}_{epoch}.pth")
+        print("模型保存成功")
 
-        if epoch % 1 == 0:
-            times += 1
-            torch.save(model.state_dict(),
-                       f"/hy-nas/model/{model_name}_{epoch}.pth")
-            print("模型保存成功")
+        if epoch % 4 == 0:
             model.eval()
 
             r_acc, auc, con_mat, recall, precision = evaluate(model, config.ff_real_root, config.ff_syn_root,config.ff_csv_root, "test")
