@@ -16,7 +16,7 @@ import types
 
 import timm.models.efficientnet as effnet
 
-SRM_npy = np.load(r'/hy-nas/F3_Net/models/SRM_Kernels.npy')
+SRM_npy = np.load(r'E:\Desktop\DF_detection\F3_Net\models\SRM_Kernels.npy')
 
 
 class SEblock(nn.Module):
@@ -164,7 +164,7 @@ class HPF_SRM(nn.Module):
 
 class F3Net(nn.Module):
     def __init__(self, num_classes=1, img_width=380, img_height=380, LFS_window_size=10, LFS_stride=2, LFS_M=6,
-                 mode='Both', device=None):
+                 mode='Both',loss_mode="Logits", device=None):
         super(F3Net, self).__init__()
         assert img_width == img_height
         img_size = img_width
@@ -185,10 +185,10 @@ class F3Net(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         # effnet 的全连接
 
-        # if mode == 'LFS' or mode == "FAD":
-        self.fc = nn.Linear(2560, 1)
-        # else:
-        #     self.fc = nn.Linear(5120, 1)
+        if loss_mode == 'Logits':
+            self.fc = nn.Linear(2560, 1)
+        else:
+            self.fc = nn.Linear(2560, 2)
 
 
 
@@ -265,7 +265,7 @@ class F3Net(nn.Module):
         # print("relu")
         f = self.avg_pool(f).flatten(1)  # 全局平均池化 + 在第一维全部展开
         # print("avg")
-        f = f.view(f.size(0), -1)  # f.size() 和 f.shape 一样 其中每个参数就是相应维度的数值 这一行作用感觉和上面一行一样的
+        # f = f.view(f.size(0), -1)  # f.size() 和 f.shape 一样 其中每个参数就是相应维度的数值 这一行作用感觉和上面一行一样的
         # print("view")
         return f
 

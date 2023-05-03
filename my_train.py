@@ -19,7 +19,7 @@ import utils.f3net_conf as config
 from trainer import Trainer
 from torch.utils.tensorboard import SummaryWriter
 import os
-
+from utils.utils import AMSoftmaxLoss
 
 def record(r_acc, auc ,con_mat ,recall, precision,epoch,data_name):
     print("本次epoch的acc为：" + str(r_acc))
@@ -61,23 +61,22 @@ def f3net_training(iftrained=False):
     log_dir = os.path.join('/tf_logs', 'precision')
     precision_writer = SummaryWriter(log_dir=log_dir)
 
-
+    # 初始化gpu设备
     device = config.device
 
+    # 载入dataset和loader
+    bz = 4
     train_data = DeepfakeDataset(normal_root=config.ff_real_root, malicious_root=config.ff_syn_root, mode='train',
                                  resize=380,
                                  csv_root=config.ff_csv_root)
     train_data_size = len(train_data)
     print('train_data_size:', train_data_size)
-
-    bz = 4
     train_loader = DataLoader(train_data, bz, shuffle=True)
 
-    # train
-
-    model = F3Net(mode="Both")
+    # 初始化model
     model_name = input("请输入model_name: ")
-
+    model_loss = input("请输入model_loss(logits or AM): ")
+    model = F3Net(mode="Both",loss_mode = model_loss)
 
     if iftrained == True:
         model_to_load = input("载入的模型为：")
@@ -85,7 +84,6 @@ def f3net_training(iftrained=False):
         print(f"{model_to_load}载入成功")
 
     model.to(device)
-
     print("mode: Both")
     # for param in model.FAD_eff.parameters():
     # param.requires_grad = False
@@ -101,7 +99,13 @@ def f3net_training(iftrained=False):
     for param in model.eff.encoder.conv_stem.parameters():
         param.requires_grad = True
 
-    loss_fn = nn.BCEWithLogitsLoss().to(device)
+    # 初始化loss函数
+    if model_loss =='logits':
+        loss_fn = nn.BCEWithLogitsLoss().to(device)
+    else:
+        loss_fn = AMSoftmaxLoss(2, 2).to(device)
+
+
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.004)
     scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=8, eta_min=5e-6)
 
@@ -138,7 +142,7 @@ def f3net_training(iftrained=False):
                 minutes, s = divmod(during_time, 60)
                 print(f"已用时间 : {minutes}分钟。。。。。。。")
                 # 开始绘制loss曲线，取1000次iteration的平均值
-                loss_writer.add_scalar('训练时Loss值的变化', running_loss/running_loss_rate  , epoch * len(train_loader) + i)
+                loss_writer.add_scalar('训练时Loss值的变化', running_loss/running_loss_rate  , (epoch-1) * len(train_loader) + i)
                 running_loss = 0.0
                 running_loss_rate = 0
 
@@ -153,7 +157,7 @@ def f3net_training(iftrained=False):
             r_acc, auc, con_mat, recall, precision = evaluate(model, config.ff_real_root, config.ff_syn_root,config.ff_csv_root, "test")
             record(r_acc, auc, con_mat, recall, precision,epoch, data_name='ff_test')
 
-            r_acc, auc ,con_mat, recall ,precision= evaluate(model, config.normal_root, config.malicious_root, config.csv_root, "test")
+            r_acc, auc ,con_mat, recall ,precision= evaluate(model, config.celeb_real_root, config.celeb_syn_root, config.celeb_csv_root, "test")
             record(r_acc, auc ,con_mat, recall ,precision,epoch, data_name='celeb_test')
 
 

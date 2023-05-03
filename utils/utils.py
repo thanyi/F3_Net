@@ -10,80 +10,50 @@ from sklearn.metrics import auc as cal_auc
 from PIL import Image
 import sys
 import logging
-
+import torch.nn.functional as F
 from torch import nn
 from sklearn.metrics import confusion_matrix
 from dataset.dataset import DeepfakeDataset
-from trainer import Trainer
 
 
-class FFDataset(data.Dataset):
+class AMSoftmaxLoss(nn.Module):
+    def __init__(self, num_classes, feat_dim, margin=0.35, scale=30.0):
+        super(AMSoftmaxLoss, self).__init__()
+        self.num_classes = num_classes
+        self.feat_dim = feat_dim
+        self.margin = margin
+        self.scale = scale
+        self.weight = nn.Parameter(torch.FloatTensor(num_classes, feat_dim))
+        nn.init.xavier_uniform_(self.weight)
 
-    def __init__(self, dataset_root, frame_num=300, size=299, augment=True):
-        self.data_root = dataset_root
-        self.frame_num = frame_num
-        self.train_list = self.collect_image(self.data_root)   #将文件夹中的每一个图像（绝对）路径加到train_list中
-        if augment:
-            self.transform = trans.Compose([
-                                            trans.RandomHorizontalFlip(p=0.5),
-                                            trans.ToTensor()])
-            print("Augment True!")
-        else:
-            self.transform = trans.ToTensor()
-        self.max_val = 1.
-        self.min_val = -1.
-        self.size = size
+    def forward(self, feat, labels):
+        assert feat.size(1) == self.feat_dim, "输入特征维度与预期不符。"
+        assert feat.size(0) == labels.size(0), "特征和标签的 batch size 不匹配。"
 
-    def collect_image(self, root):
-        image_path_list = []
-        for split in os.listdir(root):
-            split_root = os.path.join(root, split)
-            img_list = os.listdir(split_root)
-            random.shuffle(img_list)
-            img_list = img_list if len(img_list) < self.frame_num else img_list[:self.frame_num]
-            for img in img_list:
-                img_path = os.path.join(split_root, img)
-                image_path_list.append(img_path)
-        return image_path_list
+        # L2 范数归一化
+        feat_norm = F.normalize(feat, p=2, dim=1)
+        weight_norm = F.normalize(self.weight, p=2, dim=1)
 
-    def read_image(self, path):
-        img = Image.open(path)
-        return img
+        # 计算余弦相似度
+        cos_theta = torch.mm(feat_norm, weight_norm.t())
 
-    def resize_image(self, image, size):
-        img = image.resize((size, size))
-        return img
+        # 添加余弦边缘
+        target_logit = cos_theta[torch.arange(0, feat.size(0)), labels].view(-1, 1)
+        sin_theta = torch.sqrt(1.0 - torch.pow(target_logit, 2))
+        cos_theta_m = cos_theta - self.margin
+        cos_theta_m = target_logit * cos_theta_m / (cos_theta - target_logit * (1 - self.margin))
 
-    def __getitem__(self, index):
-        image_path = self.train_list[index]
-        img = self.read_image(image_path)
-        img = self.resize_image(img,size=self.size)
-        img = self.transform(img)
-        img = img * (self.max_val - self.min_val) + self.min_val
-        return img
+        # 更新角度
+        final_theta = cos_theta * 1.0
+        final_theta.scatter_(1, labels.view(-1, 1).long(), cos_theta_m)
+        final_theta *= self.scale
 
-    def __len__(self):
-        return len(self.train_list)
+        # 计算 AM-Softmax Loss
+        loss = F.cross_entropy(final_theta, labels)
+        return loss
 
 
-
-def get_dataset(name = 'train', size=299, root='E:\\Dataset_pre\\ff++_dataset\\', frame_num=300, augment=True):
-    root = os.path.join(root, name)
-    fake_root = os.path.join(root,'fake')
-
-    fake_list = ['Deepfakes', 'FaceSwap', 'Face2Face', 'NeuralTextures']
-
-    total_len = len(fake_list)
-    dset_lst = []
-    for i in range(total_len):
-        fake = os.path.join(fake_root , fake_list[i])
-        dset = FFDataset(fake, frame_num, size, augment)
-        dset.size = size
-        dset_lst.append(dset)
-    return torch.utils.data.ConcatDataset(dset_lst), total_len
-
-
-def evaluate(model, normal_root,malicious_root,csv_root, mode='test',):
+def evaluate(model, normal_root,malicious_root,csv_root, mode='test',loss_mode='logits'):
 
     my_dataset = DeepfakeDataset(normal_root=normal_root, malicious_root=malicious_root, mode=mode, resize=380,
                                  csv_root=csv_root)
@@ -111,6 +81,11 @@ def evaluate(model, normal_root,malicious_root,csv_root, mode='test',):
             x, y = x.to(device), y.to(device)
             # print(x.shape)
             output = model(x)
+
+            if loss_mode!='logits':
+                output = torch.nn.Softmax(dim=1)(output)
+                output = output[:, 1].unsqueeze(1)  # [:, 1] 表示舍掉第0维只要第1维
+
             y_pred.extend(output.sigmoid().flatten().tolist())
             y_true.extend(y.flatten().tolist())
 
