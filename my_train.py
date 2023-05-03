@@ -154,6 +154,9 @@ def f3net_training(iftrained=False):
         if epoch % 4 == 0:
             model.eval()
 
+            with open(f"/hy-nas/model/{model_name}_{epoch}.txt", "a+") as f:
+                f.write(f"this is the {epoch}'s epoch")
+
             r_acc, auc, con_mat, recall, precision = evaluate(model, config.ff_real_root, config.ff_syn_root,config.ff_csv_root, "test")
             record(r_acc, auc, con_mat, recall, precision,epoch, data_name='ff_test')
 
