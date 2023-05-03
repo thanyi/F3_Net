@@ -19,7 +19,7 @@ import utils.f3net_conf as config
 from trainer import Trainer
 from torch.utils.tensorboard import SummaryWriter
 import os
-from utils.utils import AMSoftmaxLoss
+from utils.utils import AMSoftmax
 
 def record(r_acc, auc ,con_mat ,recall, precision,epoch,data_name):
     print("本次epoch的acc为：" + str(r_acc))
@@ -103,7 +103,7 @@ def f3net_training(iftrained=False):
     if model_loss =='logits':
         loss_fn = nn.BCEWithLogitsLoss().to(device)
     else:
-        loss_fn = AMSoftmaxLoss(2, 2).to(device)
+        loss_fn = AMSoftmax(2, 2).to(device)
 
 
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.004)
@@ -112,7 +112,7 @@ def f3net_training(iftrained=False):
     running_loss = 0.0
     running_loss_rate = 0
 
-    for epoch in range(50):
+    for epoch in range(1,50):
         starttime = time.time()
         print("----------------第{}个epoch--------------".format(epoch))
 
@@ -125,7 +125,7 @@ def f3net_training(iftrained=False):
             output = model(X)
             output = output.squeeze(-1)
 
-            loss = loss_fn(output, y.float())
+            loss, _ = loss_fn(output, y.float())
 
             optimizer.zero_grad()
             loss.backward()

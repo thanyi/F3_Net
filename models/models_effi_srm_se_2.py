@@ -16,7 +16,7 @@ import types
 
 import timm.models.efficientnet as effnet
 
-SRM_npy = np.load(r'E:\Desktop\DF_detection\F3_Net\models\SRM_Kernels.npy')
+SRM_npy = np.load(r'/hy-nas/F3_Net/models/SRM_Kernels.npy')
 
 
 class SEblock(nn.Module):
