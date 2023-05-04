@@ -14,7 +14,7 @@ import torch.nn.functional as F
 from torch import nn
 from sklearn.metrics import confusion_matrix
 from dataset.dataset import DeepfakeDataset
-
+from torch.autograd import Variable
 
 # class AMSoftmaxLoss(nn.Module):
 #     def __init__(self, num_classes, feat_dim, margin=0.35, scale=30.0):
@@ -53,6 +53,59 @@ from dataset.dataset import DeepfakeDataset
 #         loss = F.cross_entropy(final_theta, labels)
 #         return loss
 
+class FocalLoss(nn.Module):
+    def __init__(self, gamma=0, alpha=None, size_average=True):
+        super(FocalLoss, self).__init__()
+        self.gamma = gamma
+        self.alpha = alpha
+        if isinstance(alpha,(float,int)): self.alpha = torch.Tensor([alpha,1-alpha])
+        if isinstance(alpha,list): self.alpha = torch.Tensor(alpha)
+        self.size_average = size_average
+
+    def forward(self, input, target):
+        if input.dim()>2:
+            input = input.view(input.size(0),input.size(1),-1)  # N,C,H,W => N,C,H*W
+            input = input.transpose(1,2)    # N,C,H*W => N,H*W,C
+            input = input.contiguous().view(-1,input.size(2))   # N,H*W,C => N*H*W,C
+        target = target.view(-1,1).long()
+
+        logpt = F.log_softmax(input,dim=1)
+        logpt = logpt.gather(1,target)
+        logpt = logpt.view(-1)
+        pt = Variable(logpt.data.exp())
+
+        if self.alpha is not None:
+            if self.alpha.type()!=input.data.type():
+                self.alpha = self.alpha.type_as(input.data)
+            at = self.alpha.gather(0,target.data.view(-1))
+            logpt = logpt * Variable(at)
+
+        loss = -1 * (1-pt)**self.gamma * logpt
+        if self.size_average: return loss.mean()
+        else: return loss.s
+
+# class FocalLoss(nn.Module):
+#     def __init__(self, alpha=0.25, gamma=2.0):
+#         super(FocalLoss, self).__init__()
+#         self.alpha = alpha
+#         self.gamma = gamma
+#
+#     def forward(self, input, target):
+#         # Sigmoid激活函数应用在输入上
+#         prob = torch.sigmoid(input)
+#
+#         # 计算二元交叉熵损失
+#         bce_loss = F.binary_cross_entropy(prob, target, reduction='none')
+#
+#         # 计算focal权重
+#         focal_weight = torch.pow(torch.abs(target - prob), self.gamma)
+#
+#         # 应用权重和alpha系数
+#         focal_loss = self.alpha * focal_weight * bce_loss
+#
+#         # 损失求和并平均
+#         return focal_loss.mean()
+
 class AMSoftmax(nn.Module):
     def __init__(self,
                  in_feats,
@@ -85,7 +138,7 @@ class AMSoftmax(nn.Module):
         costh_m = costh - delt_costh
         costh_m_s = self.s * costh_m
         loss = self.ce(costh_m_s, lb)
-        return loss, costh_m_s
+        return loss
 
 
 def evaluate(model, normal_root, malicious_root, csv_root, mode='test', loss_mode='logits'):

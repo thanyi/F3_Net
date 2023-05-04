@@ -19,7 +19,7 @@ import utils.f3net_conf as config
 from trainer import Trainer
 from torch.utils.tensorboard import SummaryWriter
 import os
-from utils.utils import AMSoftmax
+from utils.utils import AMSoftmax,FocalLoss
 
 def record(r_acc, auc ,con_mat ,recall, precision,epoch,data_name):
     print("本次epoch的acc为：" + str(r_acc))
@@ -66,16 +66,16 @@ def f3net_training(iftrained=False):
 
     # 载入dataset和loader
     bz = 4
-    train_data = DeepfakeDataset(normal_root=config.ff_real_root, malicious_root=config.ff_syn_root, mode='train',
+    train_data = DeepfakeDataset(normal_root=config.dfdc_real_root, malicious_root=config.dfdc_syn_root, mode='train',
                                  resize=380,
-                                 csv_root=config.ff_csv_root)
+                                 csv_root=config.dfdc_csv_root)
     train_data_size = len(train_data)
     print('train_data_size:', train_data_size)
     train_loader = DataLoader(train_data, bz, shuffle=True)
 
     # 初始化model
     model_name = input("请输入model_name: ")
-    model_loss = input("请输入model_loss(logits or AM): ")
+    model_loss = input("请输入model_loss(logits or AM  or Focal): ")
     model = F3Net(mode="Both",loss_mode = model_loss)
 
     if iftrained == True:
@@ -104,8 +104,10 @@ def f3net_training(iftrained=False):
     # 初始化loss函数
     if model_loss =='logits':
         loss_fn = nn.BCEWithLogitsLoss().to(device)
-    else:
+    elif model_loss =='AM' :
         loss_fn = AMSoftmax(2, 2).to(device)
+    else:
+        loss_fn = FocalLoss().to(device)
 
 
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.004)
@@ -127,7 +129,7 @@ def f3net_training(iftrained=False):
             output = model(X)
             output = output.squeeze(-1)
 
-            loss, _ = loss_fn(output, y.float())
+            loss = loss_fn(output, y.float())
 
             optimizer.zero_grad()
             loss.backward()
