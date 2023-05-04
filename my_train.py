@@ -98,6 +98,8 @@ def f3net_training(iftrained=False):
         param.requires_grad = False
     for param in model.eff.encoder.conv_stem.parameters():
         param.requires_grad = True
+    for param in model.eff.fc.parameters():
+        param.requires_grad = True
 
     # 初始化loss函数
     if model_loss =='logits':
@@ -157,14 +159,14 @@ def f3net_training(iftrained=False):
             with open(f"/hy-nas/model/{model_name}_{epoch}.txt", "a+") as f:
                 f.write(f"this is the {epoch}'s epoch")
 
-            r_acc, auc, con_mat, recall, precision = evaluate(model, config.ff_real_root, config.ff_syn_root,config.ff_csv_root, "test")
+            r_acc, auc, con_mat, recall, precision = evaluate(model, config.ff_real_root, config.ff_syn_root,config.ff_csv_root, "test",loss_mode="AM")
             record(r_acc, auc, con_mat, recall, precision,epoch, data_name='ff_test')
 
-            r_acc, auc ,con_mat, recall ,precision= evaluate(model, config.celeb_real_root, config.celeb_syn_root, config.celeb_csv_root, "test")
+            r_acc, auc ,con_mat, recall ,precision= evaluate(model, config.celeb_real_root, config.celeb_syn_root, config.celeb_csv_root, "test",loss_mode="AM")
             record(r_acc, auc ,con_mat, recall ,precision,epoch, data_name='celeb_test')
 
 
-            r_acc, auc ,con_mat ,recall, precision = evaluate(model, config.dfdc_root, config.dfdc_syn_root, config.dfdc_csv_root, "test")
+            r_acc, auc ,con_mat ,recall, precision = evaluate(model, config.dfdc_root, config.dfdc_syn_root, config.dfdc_csv_root, "test",loss_mode="AM")
             record(r_acc, auc, con_mat, recall, precision, epoch, data_name='dfdc_test')
             model.train()
 

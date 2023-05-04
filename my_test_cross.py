@@ -17,7 +17,7 @@ from utils.utils import evaluate
 import utils.f3net_conf as config
 
 import timm.models.efficientnet as effnet
-from models.models_effi_srm_se_2 import get_eff_state_dict
+from models.models_effi_srm_se_2 import get_eff_state_dict,F3Net
 
 
 import torch
@@ -48,13 +48,13 @@ class EffNet(nn.Module):
 
 
 def modelTest():
-    root = r"D:\DeepFakeProject_in_D\deepfake_project\eliminate_project\screen_shot\face_recognition\deepware.pt"
+    root = r"/hy-nas/model/FF_4.pth"
 
-    model = EffNet("b7")
+    model = F3Net()
 
     state_dict = torch.load(root)
 
-    model_name = "deepware"
+    model_name = "FF_4"
 
 
     model.load_state_dict(torch.load(root))
@@ -81,7 +81,7 @@ def modelTest():
 
 
 
-    r_acc, auc ,con_mat ,recall, precision  = evaluate(model, real_root , syn_root , csv_root , "test")
+    r_acc, auc ,con_mat ,recall, precision  = evaluate(model, real_root , syn_root , csv_root , "test",loss_mode="AM")
     print(model_name+f"模型在{data_name}数据集上的acc为：" + str(r_acc))
     print(model_name+f"模型在{data_name}数据集上的auc为：" + str(auc))
     print(model_name+f"模型在{data_name}数据集上的recall为：" + str(recall))

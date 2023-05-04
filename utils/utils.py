@@ -118,7 +118,7 @@ def evaluate(model, normal_root, malicious_root, csv_root, mode='test', loss_mod
 
             if loss_mode != 'logits':
                 output = torch.nn.Softmax(dim=1)(output)
-                output = output[:, 1].unsqueeze(1)  # [:, 1] 表示舍掉第0维只要第1维
+                output = output[:, 1].unsqueeze(1)  # 是选择，表示就是选择第1列（第0列是起点）
 
             y_pred.extend(output.sigmoid().flatten().tolist())
             y_true.extend(y.flatten().tolist())
