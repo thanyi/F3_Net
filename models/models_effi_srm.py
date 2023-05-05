@@ -15,7 +15,7 @@ import types
 
 import timm.models.efficientnet as effnet
 
-SRM_npy = np.load(r'/home/jiahaozhong/code/F3_Net/models/SRM_Kernels.npy')
+SRM_npy = np.load(r'/hy-nas/F3_Net/models/SRM_Kernels.npy')
 
 class EffNet(nn.Module):
     def __init__(self, arch='b7'):
@@ -147,88 +147,36 @@ class HPF_SRM(nn.Module):
 
 class F3Net(nn.Module):
     def __init__(self, num_classes=1, img_width=380, img_height=380, LFS_window_size=10, LFS_stride=2, LFS_M=6,
-                 mode='Both', device=None):
+                 mode='Both',loss_mode="logits", device=None):
         super(F3Net, self).__init__()
         assert img_width == img_height
         img_size = img_width
         self.num_classes = num_classes
         self.mode = mode
+        self.fad_channel = 12
         self.srm_channel = 90
 
-        # init branches
-        if mode == 'FAD' or mode == 'Both' :
+        if mode == 'Both':
             self.FAD_head = FAD_Head(img_size)
-            self.init_eff_FAD()
-
-        if mode == 'SRM' or mode == 'Both':
             self.SRM_head = HPF_SRM()
-            self.init_eff_SRM()
-
-
-        if mode == 'Original':
             self.init_eff()
 
         # classifier
         self.relu = nn.ReLU(inplace=True)
         # effnet 的全连接
 
-        if mode == 'LFS' or mode == "FAD":
+        if loss_mode == 'Logits':
             self.fc = nn.Linear(2560, 1)
+        elif loss_mode == 'AM':
+            self.fc = nn.Linear(2560, 2)
         else:
-            self.fc = nn.Linear(5120, 1)
+            self.fc = nn.Linear(2560, 1)
 
 
 
         self.dp = nn.Dropout(p=0.2)
-        self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.avg_pool = nn.AdaptiveAvgPool2d((1, 1)) # 指定输出的通道大小就是1*1
 
-    def init_eff_FAD(self):
-        '''
-        函数所做
-            加载effnet，作为FAD_eff
-            调用get_eff_state_dict()加载预训练模型
-            更改FAD_eff的conv1，是为了平衡模型,我们进行对原模型的数据的更改
-
-        Returns:
-
-        '''
-        self.FAD_eff = EffNet("b7")
-
-        # To get a good performance, using ImageNet-pretrained effnet model is recommended
-        state_dict = get_eff_state_dict()
-        conv_stem_data = state_dict['encoder.conv_stem.weight'].data
-
-        self.FAD_eff.load_state_dict(state_dict, False)
-
-        self.FAD_eff.encoder.conv_stem = nn.Conv2d(12, 64, 3, 2, 0, bias=False)
-
-        for i in range(4):
-            self.FAD_eff.encoder.conv_stem.weight.data[:, i*3:(i+1)*3, :, :] = conv_stem_data / 4.0
-
-    def init_eff_SRM(self):
-        '''
-        函数所做
-            加载effnet，作为SRM_eff
-            调用get_xcep_state_dict()加载预训练模型
-            更改SRM_eff的conv1，理由好像是为了平衡模型
-
-        Returns:
-
-        '''
-        self.SRM_eff = EffNet("b7")
-
-
-        # To get a good performance, using ImageNet-pretrained Xception model is recommended
-        state_dict = get_eff_state_dict()
-        conv1_data = state_dict['encoder.conv_stem.weight'].data
-
-        self.SRM_eff.load_state_dict(state_dict, False)
-
-        # copy on conv1
-        # let new conv1 use old param to balance the network
-        self.SRM_eff.encoder.conv_stem = nn.Conv2d(self.srm_channel, 64, 3, 1, 0, bias=False)
-        for i in range(int(self.srm_channel / 3)):
-            self.SRM_eff.encoder.conv_stem.weight.data[:, i * 3:(i + 1) * 3, :, :] = conv1_data / float(self.srm_channel / 3.0)
 
 
     def init_eff(self):
@@ -240,7 +188,17 @@ class F3Net(nn.Module):
         self.eff = EffNet("b7")
 
         state_dict = get_eff_state_dict()
+
+        conv1_data = state_dict['encoder.conv_stem.weight'].data
+
         self.eff.load_state_dict(state_dict, False)
+
+        self.eff.encoder.conv_stem = nn.Conv2d(self.srm_channel + self.fad_channel, 64, 3, 2, 0, bias=False)
+
+
+        for i in range(int((self.srm_channel+self.fad_channel) / 3)):
+            self.eff.encoder.conv_stem.weight.data[:, i * 3:(i + 1) * 3, :, :] = conv1_data / float((self.srm_channel+self.fad_channel )/ 3)
+
 
     def forward(self, x):
         if self.mode == 'FAD':
@@ -256,13 +214,18 @@ class F3Net(nn.Module):
 
         if self.mode == 'Both':
             fea_FAD = self.FAD_head(x)
-            fea_FAD = self.FAD_eff(fea_FAD)
-            fea_FAD = self._norm_fea(fea_FAD)
+            # fea_FAD = self.FAD_eff(fea_FAD)
+            # fea_FAD = self._norm_fea(fea_FAD)
             fea_SRM = self.SRM_head(x)
-            fea_SRM = self.SRM_eff(fea_SRM)
-            fea_SRM = self._norm_fea(fea_SRM)
+            # fea_SRM = self.SRM_eff(fea_SRM)
+            # fea_SRM = self._norm_fea(fea_SRM)
 
             y = torch.cat((fea_FAD, fea_SRM), dim=1)
+            #print("y:"+str(y.size()))
+
+            y = self.eff(y)
+            y = self._norm_fea(y)
+
         # print(y.shape)
         f = self.dp(y)
         f = self.fc(f)
@@ -282,7 +245,7 @@ class F3Net(nn.Module):
         # print("relu")
         f = self.avg_pool(f).flatten(1)
         # print("avg")
-        f = f.view(f.size(0), -1)
+        # f = f.view(f.size(0), -1)  # f.size() 和 f.shape 一样 其中每个参数就是相应维度的数值 这一行作用感觉和上面一行一样的
         # print("view")
         return f
 

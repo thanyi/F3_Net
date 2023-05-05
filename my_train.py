@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import auc as cal_auc
 from dataset.dataset import DeepfakeDataset
-from models.models_effi_srm_se_2 import *
+from models.models_effi_srm import *
 from sklearn.metrics import average_precision_score, precision_recall_curve, accuracy_score
 from utils.utils import evaluate
 import utils.f3net_conf as config
@@ -155,20 +155,20 @@ def f3net_training(iftrained=False):
                    f"/hy-nas/model/{model_name}_{epoch}.pth")
         print("模型保存成功")
 
-        if epoch % 4 == 0:
+        if epoch % 1 == 0:
             model.eval()
 
             with open(f"/hy-nas/model/{model_name}_{epoch}.txt", "a+") as f:
-                f.write(f"this is the {epoch}'s epoch")
+                f.write(f"this is the {epoch}'s epoch\n")
 
-            r_acc, auc, con_mat, recall, precision = evaluate(model, config.ff_real_root, config.ff_syn_root,config.ff_csv_root, "test",loss_mode="AM")
+            r_acc, auc, con_mat, recall, precision = evaluate(model, config.ff_real_root, config.ff_syn_root,config.ff_csv_root, "test",loss_mode=model_loss)
             record(r_acc, auc, con_mat, recall, precision,epoch, data_name='ff_test')
 
-            r_acc, auc ,con_mat, recall ,precision= evaluate(model, config.celeb_real_root, config.celeb_syn_root, config.celeb_csv_root, "test",loss_mode="AM")
+            r_acc, auc ,con_mat, recall ,precision= evaluate(model, config.celeb_real_root, config.celeb_syn_root, config.celeb_csv_root, "test",loss_mode=model_loss)
             record(r_acc, auc ,con_mat, recall ,precision,epoch, data_name='celeb_test')
 
 
-            r_acc, auc ,con_mat ,recall, precision = evaluate(model, config.dfdc_root, config.dfdc_syn_root, config.dfdc_csv_root, "test",loss_mode="AM")
+            r_acc, auc ,con_mat ,recall, precision = evaluate(model, config.dfdc_root, config.dfdc_syn_root, config.dfdc_csv_root, "test",loss_mode=model_loss)
             record(r_acc, auc, con_mat, recall, precision, epoch, data_name='dfdc_test')
             model.train()
 

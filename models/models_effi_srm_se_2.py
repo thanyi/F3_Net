@@ -164,7 +164,7 @@ class HPF_SRM(nn.Module):
 
 class F3Net(nn.Module):
     def __init__(self, num_classes=1, img_width=380, img_height=380, LFS_window_size=10, LFS_stride=2, LFS_M=6,
-                 mode='Both',loss_mode="Logits", device=None):
+                 mode='Both',loss_mode="logits", device=None):
         super(F3Net, self).__init__()
         assert img_width == img_height
         img_size = img_width
@@ -187,8 +187,10 @@ class F3Net(nn.Module):
 
         if loss_mode == 'Logits':
             self.fc = nn.Linear(2560, 1)
-        else:
+        elif loss_mode == 'AM':
             self.fc = nn.Linear(2560, 2)
+        else:
+            self.fc = nn.Linear(2560, 1)
 
 
 
