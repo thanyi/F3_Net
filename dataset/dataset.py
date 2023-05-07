@@ -120,21 +120,25 @@ class DeepfakeDataset(Dataset):
         # self.images, self.labels
         # img: 'F:\\dataset\\faceforensics++\\original_sequences\\youtube\\c23\\our_imgs\\000\\000-3.png'
         # label: 0
+
         img, label = self.images[idx], self.labels[idx]
+        try:
+            tf = transforms.Compose([
+                lambda x: Image.open(x).convert("RGB"),  # string path => image data
+                # transforms.Resize((int(self.resize), int(self.resize))),
 
-        tf = transforms.Compose([
-            lambda x: Image.open(x).convert("RGB"),  # string path => image data
-            # transforms.Resize((int(self.resize), int(self.resize))),
+                transforms.RandomRotation(30),
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+            ])
 
-            transforms.RandomRotation(30),
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])
-        ])
-
-        img = tf(img)
-        label = torch.tensor(label)
+            img = tf(img)
+            label = torch.tensor(label)
+        except OSError as e:
+            print(f"Error loading image at index {idx}: {img}")
+            return None
 
         return img, label
 

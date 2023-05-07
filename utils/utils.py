@@ -3,6 +3,7 @@ import os
 import numpy as np
 import random
 from torch.utils import data
+from torchvision.transforms import transforms
 from torchvision import transforms as trans
 from sklearn.metrics import recall_score, precision_score, accuracy_score
 from sklearn.metrics import roc_curve
@@ -190,8 +191,6 @@ def evaluate(model, normal_root, malicious_root, csv_root, mode='test', loss_mod
         precision = precision_score(y_true, y_pred)
 
     return r_acc, AUC, con_mat, recall, precision
-
-
 
 
 

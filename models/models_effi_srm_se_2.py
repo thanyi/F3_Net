@@ -315,17 +315,17 @@ def get_eff_state_dict(pretrained_path=config.efficient_pretrained_path):
 if __name__ == '__main__':
 
 
-    tf = transforms.Compose([
-        lambda x: Image.open(x).convert("RGB"),  # string path => image data
-        # transforms.Resize(380),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])
-    ])
-    path = r"C:\Users\ethanyi\AppData\Roaming\JetBrains\PyCharm2021.1\scratches\1.png"
-    img = tf (path)
-    img = img.unsqueeze(0)
-    print(img.shape)
+    # tf = transforms.Compose([
+    #     lambda x: Image.open(x).convert("RGB"),  # string path => image data
+    #     # transforms.Resize(380),
+    #     transforms.ToTensor(),
+    #     transforms.Normalize(mean=[0.485, 0.456, 0.406],
+    #                          std=[0.229, 0.224, 0.225])
+    # ])
+    # path = r"C:\Users\ethanyi\AppData\Roaming\JetBrains\PyCharm2021.1\scratches\1.png"
+    # img = tf (path)
+    # img = img.unsqueeze(0)
+    # print(img.shape)
     # srm = HPF_SRM()
     # out  = srm(img)
     # print(out.shape)
@@ -335,7 +335,7 @@ if __name__ == '__main__':
 
 
 
-    net = F3Net()
-    out = net(img)
-    # print(net.buffers)
+    net = EffNet()
+    # out = net(img)
+    print(net)
 

@@ -13,10 +13,9 @@ from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import auc as cal_auc
 from dataset.dataset import DeepfakeDataset
 from models.models_effi_srm import *
-from sklearn.metrics import average_precision_score, precision_recall_curve, accuracy_score
 from utils.utils import evaluate
 import utils.f3net_conf as config
-from trainer import Trainer
+
 from torch.utils.tensorboard import SummaryWriter
 import os
 from utils.utils import AMSoftmax,FocalLoss
@@ -111,7 +110,7 @@ def f3net_training(iftrained=False):
 
 
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.004)
-    scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=8, eta_min=5e-6)
+    scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=4, eta_min=5e-6)
 
     running_loss = 0.0
     running_loss_rate = 0
