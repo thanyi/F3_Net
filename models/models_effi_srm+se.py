@@ -1,6 +1,6 @@
 """
 这个文件是包含了efficientNet+srm
-            LFS+SRM+SE
+            FAD+(SRM+SE)
             同时尝试只使用一个efficientNet网络
 """
 from PIL import Image
@@ -130,63 +130,6 @@ class FAD_Head(nn.Module):
         return out
 
 
-class LFS_Head(nn.Module):
-    def __init__(self, size, window_size, M):
-        super(LFS_Head, self).__init__()
-
-        self.window_size = window_size
-        self._M = M
-
-        # init DCT matrix
-        self._DCT_patch = nn.Parameter(torch.tensor(DCT_mat(window_size)).float(), requires_grad=False)
-        self._DCT_patch_T = nn.Parameter(torch.transpose(torch.tensor(DCT_mat(window_size)).float(), 0, 1),
-                                         requires_grad=False)
-
-        self.unfold = nn.Unfold(kernel_size=(window_size, window_size), stride=2, padding=4)
-
-        # init filters
-        self.filters = nn.ModuleList(
-            [Filter(window_size, window_size * 2. / M * i, window_size * 2. / M * (i + 1), norm=True) for i in
-             range(M)])
-
-    def forward(self, x):
-        # turn RGB into Gray
-        x_gray = 0.299 * x[:, 0, :, :] + 0.587 * x[:, 1, :, :] + 0.114 * x[:, 2, :, :]
-        x = x_gray.unsqueeze(1)
-
-        # rescale to 0 - 255
-        x = (x + 1.) * 122.5
-
-        # calculate size
-        N, C, W, H = x.size()
-        S = self.window_size
-        size_after = int((W - S + 8)/2) + 1
-        # print((W - S + 8)/2)
-        assert size_after == 190
-
-        # sliding window unfold and DCT
-        x_unfold = self.unfold(x)  # [N, C * S * S, L]   L:block num
-        L = x_unfold.size()[2]
-        x_unfold = x_unfold.transpose(1, 2).reshape(N, L, C, S, S)  # [N, L, C, S, S]
-        x_dct = self._DCT_patch @ x_unfold @ self._DCT_patch_T
-
-        # M kernels filtering
-        y_list = []
-        for i in range(self._M):
-            # y = self.filters[i](x_dct)    # [N, L, C, S, S]
-            # y = torch.abs(y)
-            # y = torch.sum(y, dim=[2,3,4])   # [N, L]
-            # y = torch.log10(y + 1e-15)
-            y = torch.abs(x_dct)
-            y = torch.log10(y + 1e-15)
-            y = self.filters[i](y)
-            y = torch.sum(y, dim=[2, 3, 4])
-            y = y.reshape(N, size_after, size_after).unsqueeze(dim=1)  # [N, 1, 149, 149]
-            trans = transforms.Resize(380)
-            y = trans(y)
-            y_list.append(y)
-        out = torch.cat(y_list, dim=1)  # [N, M, 149, 149]
-        return out
 
 
 class HPF_SRM(nn.Module):
@@ -215,27 +158,26 @@ class HPF_SRM(nn.Module):
             srm_list.append(y)
 
         out = torch.cat(srm_list, dim=1)
-        # print("srm:"+str(out.shape))
+        # print(out.shape)
         return out
 
 
 class F3Net(nn.Module):
     def __init__(self, num_classes=1, img_width=380, img_height=380, LFS_window_size=10, LFS_stride=2, LFS_M=6,
-                 mode='Both', device=None):
+                 mode='Both',loss_mode="logits", device=None):
         super(F3Net, self).__init__()
         assert img_width == img_height
         img_size = img_width
         self.num_classes = num_classes
         self.mode = mode
-        self.lfs_channel = 6
+        self.fad_channel = 12
         self.srm_channel = 90
-        self._LFS_M = LFS_M
-        self.se = SEblock(self._LFS_M+self.srm_channel)
+        self.se = SEblock(self.srm_channel)
 
 
 
         if mode == 'Both':
-            self.LFS_head = LFS_Head(img_size, LFS_window_size, LFS_M)
+            self.FAD_head = FAD_Head(img_size)
             self.SRM_head = HPF_SRM()
             self.init_eff()
 
@@ -243,10 +185,12 @@ class F3Net(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         # effnet 的全连接
 
-        # if mode == 'LFS' or mode == "FAD":
-        self.fc = nn.Linear(2560, 1)
-        # else:
-        #     self.fc = nn.Linear(5120, 1)
+        if loss_mode == 'Logits':
+            self.fc = nn.Linear(2560, 1)
+        elif loss_mode == 'AM':
+            self.fc = nn.Linear(2560, 2)
+        else:
+            self.fc = nn.Linear(2560, 1)
 
 
 
@@ -269,13 +213,13 @@ class F3Net(nn.Module):
 
         self.eff.load_state_dict(state_dict, False)
 
-        self.eff.encoder.conv_stem = nn.Conv2d(self.srm_channel + self._LFS_M, 64, 3, 2, 0, bias=False)
+        self.eff.encoder.conv_stem = nn.Conv2d(self.srm_channel + self.fad_channel, 64, 3, 2, 0, bias=False)
 
 
 
 
-        for i in range(int((self.srm_channel + self._LFS_M) / 3)):
-            self.eff.encoder.conv_stem.weight.data[:, i * 3:(i + 1) * 3, :, :] = conv1_data / float((self.srm_channel+self._LFS_M )/ 3)
+        for i in range(int((self.srm_channel+self.fad_channel) / 3)):
+            self.eff.encoder.conv_stem.weight.data[:, i * 3:(i + 1) * 3, :, :] = conv1_data / float((self.srm_channel+self.fad_channel )/ 3)
 
 
     def forward(self, x):
@@ -285,23 +229,16 @@ class F3Net(nn.Module):
             fea_FAD = self._norm_fea(fea_FAD)
             y = fea_FAD
 
-        if self.mode == 'Original':
-            fea = self.eff.features(x)
-            fea = self._norm_fea(fea)
-            y = fea
-
         if self.mode == 'Both':
-            fea_LFS = self.LFS_head(x)
+            fea_FAD = self.FAD_head(x)
             # fea_FAD = self.FAD_eff(fea_FAD)
             # fea_FAD = self._norm_fea(fea_FAD)
             fea_SRM = self.SRM_head(x)
             # fea_SRM = self.SRM_eff(fea_SRM)
             # fea_SRM = self._norm_fea(fea_SRM)
-            # print(fea_LFS.shape)
-            y = torch.cat((fea_LFS, fea_SRM), dim=1)
-            # print(y.size())
-            #print("y:"+str(y.size()))
-            y = self.se(y)
+            fea_SRM = self.se(fea_SRM)
+            y = torch.cat((fea_FAD, fea_SRM), dim=1)
+
             y = self.eff(y)
             y = self._norm_fea(y)
 
@@ -324,7 +261,7 @@ class F3Net(nn.Module):
         # print("relu")
         f = self.avg_pool(f).flatten(1)  # 全局平均池化 + 在第一维全部展开
         # print("avg")
-        f = f.view(f.size(0), -1)  # f.size() 和 f.shape 一样 其中每个参数就是相应维度的数值 这一行作用感觉和上面一行一样的
+        # f = f.view(f.size(0), -1)  # f.size() 和 f.shape 一样 其中每个参数就是相应维度的数值 这一行作用感觉和上面一行一样的
         # print("view")
         return f
 
@@ -372,17 +309,17 @@ def get_eff_state_dict(pretrained_path=config.efficient_pretrained_path):
 if __name__ == '__main__':
 
 
-    tf = transforms.Compose([
-        lambda x: Image.open(x).convert("RGB"),  # string path => image data
-        transforms.Resize(380),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])
-    ])
-    path = r"C:\Users\ethanyi\AppData\Roaming\JetBrains\PyCharm2021.1\scratches\1.png"
-    img = tf (path)
-    img = img.unsqueeze(0)
-    print(img.shape)
+    # tf = transforms.Compose([
+    #     lambda x: Image.open(x).convert("RGB"),  # string path => image data
+    #     # transforms.Resize(380),
+    #     transforms.ToTensor(),
+    #     transforms.Normalize(mean=[0.485, 0.456, 0.406],
+    #                          std=[0.229, 0.224, 0.225])
+    # ])
+    # path = r"C:\Users\ethanyi\AppData\Roaming\JetBrains\PyCharm2021.1\scratches\1.png"
+    # img = tf (path)
+    # img = img.unsqueeze(0)
+    # print(img.shape)
     # srm = HPF_SRM()
     # out  = srm(img)
     # print(out.shape)
@@ -392,7 +329,6 @@ if __name__ == '__main__':
 
 
 
-    net = F3Net()
-    out = net(img)
-    # print(net.buffers)
-
+    net = EffNet()
+    # out = net(img)
+    print(net)
