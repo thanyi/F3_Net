@@ -1,6 +1,6 @@
 """
 这个文件是包含了efficientNet+srm
-            FAD+(SRM+SE)
+            FAD+(SRM+SE)+SE
             同时尝试只使用一个efficientNet网络
 """
 from PIL import Image
@@ -239,6 +239,7 @@ class F3Net(nn.Module):
             fea_SRM = self.se(fea_SRM)
             y = torch.cat((fea_FAD, fea_SRM), dim=1)
 
+            y = self.se(y)
             y = self.eff(y)
             y = self._norm_fea(y)
 
