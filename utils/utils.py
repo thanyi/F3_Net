@@ -7,7 +7,7 @@ from torchvision.transforms import transforms
 from torchvision import transforms as trans
 from sklearn.metrics import recall_score, precision_score, accuracy_score
 from sklearn.metrics import roc_curve
-from sklearn.metrics import auc as cal_auc
+from sklearn.metrics import roc_auc_score as cal_auc
 from PIL import Image
 import sys
 import logging
