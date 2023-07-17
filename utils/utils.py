@@ -5,8 +5,8 @@ import random
 from torch.utils import data
 from torchvision.transforms import transforms
 from torchvision import transforms as trans
-from sklearn.metrics import recall_score, precision_score, accuracy_score
-from sklearn.metrics import roc_curve
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import roc_curve,auc
 from sklearn.metrics import roc_auc_score as cal_auc
 from PIL import Image
 import sys
@@ -183,14 +183,14 @@ def evaluate(model, normal_root, malicious_root, csv_root, mode='test', loss_mod
         y_pred = np.where(y_pred >= 0.5, 1, 0)
         fpr, tpr, thresholds = roc_curve(y_true, y_pred, pos_label=1)
 
-        AUC = cal_auc(fpr, tpr)
+        AUC = auc(fpr, tpr)
 
         r_acc = accuracy_score(y_true, y_pred)
         con_mat = confusion_matrix(y_true, y_pred)
-        recall = recall_score(y_true, y_pred)
-        precision = precision_score(y_true, y_pred)
 
-    return r_acc, AUC, con_mat, recall, precision
+
+
+    return r_acc, AUC, con_mat
 
 
 

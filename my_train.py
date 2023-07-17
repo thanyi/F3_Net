@@ -20,19 +20,16 @@ from torch.utils.tensorboard import SummaryWriter
 import os
 from utils.utils import AMSoftmax,FocalLoss
 
-def record(r_acc, auc ,con_mat ,recall, precision,epoch,data_name):
+def record(r_acc, auc ,con_mat ,epoch,data_name):
     print("本次epoch的acc为：" + str(r_acc))
     print("本次epoch的auc为：" + str(auc))
     print(f"{con_mat}为本次epoch的混淆矩阵" )
 
     valid_writer.add_scalar(f'Accuracy ({data_name})', r_acc , epoch+1)
-    recall_writer.add_scalar(f'precision and Recall ({data_name})', recall , epoch+1)
-    precision_writer.add_scalar(f'precision and Recall ({data_name})', precision , epoch+1)
 
-    with open (f"/hy-nas/model/{model_name}_{epoch}.txt","a+") as f:
+
+    with open (f"/hy-nas/model/result.txt","a+") as f:
         f.write(f"Accuracy ({data_name})：" + "{:.2f}%\n".format(round(r_acc, 4) * 100) )
-        f.write(f"Recall ({data_name})：" + "{:.2f}%\n".format(round(recall, 4) * 100) )
-        f.write(f"precision ({data_name})：" + "{:.2f}%\n".format(round(precision, 4) * 100) )
         f.write(f"AUC ({data_name})：" + "{:.2f}%\n".format(round(auc, 4) * 100) )
         f.write("\n")
 
@@ -157,18 +154,18 @@ def f3net_training(iftrained=False):
         if epoch % 1 == 0:
             model.eval()
 
-            with open(f"/hy-nas/model/{model_name}_{epoch}.txt", "a+") as f:
+            with open(f"/hy-nas/model/result.txt", "a+") as f:
                 f.write(f"this is the {epoch}'s epoch\n")
 
-            r_acc, auc, con_mat, recall, precision = evaluate(model, config.ff_real_root, config.ff_syn_root,config.ff_csv_root, "test",loss_mode=model_loss)
-            record(r_acc, auc, con_mat, recall, precision,epoch, data_name='ff_test')
+            r_acc, auc, con_mat = evaluate(model, config.ff_real_root, config.ff_syn_root,config.ff_csv_root, "test",loss_mode=model_loss)
+            record(r_acc, auc, con_mat ,epoch, data_name='ff_test')
 
-            r_acc, auc ,con_mat, recall ,precision= evaluate(model, config.celeb_real_root, config.celeb_syn_root, config.celeb_csv_root, "test",loss_mode=model_loss)
-            record(r_acc, auc ,con_mat, recall ,precision,epoch, data_name='celeb_test')
+            r_acc, auc ,con_mat= evaluate(model, config.celeb_real_root, config.celeb_syn_root, config.celeb_csv_root, "test",loss_mode=model_loss)
+            record(r_acc, auc ,con_mat,epoch, data_name='celeb_test')
 
 
-            r_acc, auc ,con_mat ,recall, precision = evaluate(model, config.dfdc_root, config.dfdc_syn_root, config.dfdc_csv_root, "test",loss_mode=model_loss)
-            record(r_acc, auc, con_mat, recall, precision, epoch, data_name='dfdc_test')
+            r_acc, auc ,con_mat = evaluate(model, config.dfdc_root, config.dfdc_syn_root, config.dfdc_csv_root, "test",loss_mode=model_loss)
+            record(r_acc, auc, con_mat,  epoch, data_name='dfdc_test')
             model.train()
 
         scheduler.step()
